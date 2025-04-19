@@ -243,20 +243,6 @@ class RecipeIngredients(models.Model):
         unique_together = (('recipe', 'ingredient', 'quantity'),)
 
 
-class Review(models.Model):
-    review = models.ForeignKey('User', models.DO_NOTHING)
-    user_id = models.IntegerField()
-    recipe = models.ForeignKey(Recipe, models.DO_NOTHING)
-    rating = models.PositiveIntegerField()
-    comment = models.TextField(blank=True, null=True)
-    date_created = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'review'
-        unique_together = (('user_id', 'recipe'),)
-
-
 class Unit(models.Model):
     unit_id = models.AutoField(primary_key=True)
     unit_name = models.CharField(max_length=50, blank=True, null=True)
@@ -278,3 +264,17 @@ class User(models.Model):
     class Meta:
         managed = False
         db_table = 'user'
+
+
+class Review(models.Model):
+    review = models.ForeignKey('User', models.DO_NOTHING)
+    user_id = models.IntegerField()
+    recipe = models.ForeignKey('Recipe', models.DO_NOTHING)
+    rating = models.PositiveIntegerField()
+    comment = models.TextField(blank=True, null=True)
+    date_created = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'review'
+        unique_together = (('user_id', 'recipe'),)
