@@ -180,6 +180,13 @@ class Recipe(models.Model):
     date_added = models.DateTimeField(blank=True, null=True)
     recipe_difficulty = models.PositiveIntegerField(blank=True, null=True)
 
+    category = models.ForeignKey(
+        'Category',
+        db_column='category_id',
+        on_delete=models.DO_NOTHING,
+        related_name='recipes'
+    )
+
     class Meta:
         managed = False
         db_table = 'recipe'
