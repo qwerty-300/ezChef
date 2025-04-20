@@ -7,8 +7,8 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth.hashers import check_password
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .serializers import CategorySerializer, IngredientSerializer, NutritionSerializer, QuantitySerializer, RecipeIngredientsSerializer, UnitSerializer, UserSerializer, RecipeSerializer, ReviewSerializer
-from .models import User, Recipe, Review, Category, RecipeIngredients, Ingredient, Unit, Quantity, Nutrition
+from .serializers import CategorySerializer, IngredientSerializer, NutritionSerializer, QuantitySerializer, RecipeIngredientsSerializer, UnitSerializer, UserSerializer, RecipeSerializer, ReviewSerializer, AddRecipeSerializer, CookbookSerializer
+from .models import User, Recipe, Review, Category, RecipeIngredients, Ingredient, Unit, Quantity, Nutrition, AddRecipe, Cookbook
 from .filters import RecipeFilter
 
 
@@ -90,10 +90,6 @@ class RecipeDetailView(generics.RetrieveAPIView):
     lookup_url_kwarg = 'recipe_id'
     permission_classes = []
 
-class ReviewView(generics.ListAPIView):
-    queryset = Review.objects.all()
-    serializer_class = ReviewSerializer
-
 class RecipeIngredientsView(generics.ListAPIView):
     queryset = RecipeIngredients.objects.all()
     serializer_class = RecipeIngredientsSerializer
@@ -113,3 +109,34 @@ class QuantityView(generics.ListAPIView):
 class NutritionView(generics.ListAPIView):
     queryset = Nutrition.objects.all()
     serializer_class = NutritionSerializer
+
+# ---------------Cookbook---------------#
+class CookbookListView(generics.ListAPIView):
+    queryset = Cookbook.objects.all()
+    serializer_class = CookbookSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class CookbookDetailView(generics.RetrieveAPIView):
+    queryset = Cookbook.objects.all()
+    serializer_class = CookbookSerializer
+    lookup_field = 'cb_id'
+    permission_classes = [permissions.IsAuthenticated]
+
+class CookbookEntryListCreateView(generics.ListCreateAPIView):
+    serializer_class = AddRecipeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return AddRecipe.objects.filter(
+            cb=self.kwargs['cb_id'], user=self.request.user
+        )
+    
+    def perform_create(self, serializer):
+        serializer.save(
+            user=self.request.user,
+            cb_id=self.kwargs['cb_id']
+        )
+
+class ReviewView(generics.ListAPIView):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer

@@ -104,6 +104,13 @@ class Category(models.Model):
         managed = False
         db_table = 'category'
         unique_together = (('r_type', 'r_region'),)
+    
+    def __str__(self):
+        if self.r_type:
+            return f"{self.r_type} ({self.r_region})"
+        return self.r_region or f"Category {self.category_id}"
+    
+
 
 
 class Client(models.Model):
@@ -150,6 +157,9 @@ class Ingredient(models.Model):
         managed = False
         db_table = 'ingredient'
 
+    def __str__(self):
+        return self.ingredient_name
+    
 
 class Nutrition(models.Model):
     nutrition_id = models.AutoField(primary_key=True)
@@ -171,7 +181,10 @@ class Quantity(models.Model):
     class Meta:
         managed = False
         db_table = 'quantity'
-
+    
+    def __str__(self):
+        return str(self.quantity_amount)
+    
 
 class Recipe(models.Model):
     recipe_id = models.AutoField(primary_key=True)
@@ -194,10 +207,10 @@ class Recipe(models.Model):
 
 class RecipeIngredients(models.Model):
     pk = models.CompositePrimaryKey('recipe_id', 'ingredient_id', 'quantity_id')
-    recipe = models.ForeignKey(Recipe, models.DO_NOTHING)
     ingredient = models.ForeignKey(Ingredient, models.DO_NOTHING)
     quantity = models.ForeignKey(Quantity, models.DO_NOTHING)
     unit = models.ForeignKey('Unit', models.DO_NOTHING, blank=True, null=True)
+    recipe = models.ForeignKey(Recipe, models.CASCADE)
 
     class Meta:
         managed = False
@@ -207,12 +220,16 @@ class RecipeIngredients(models.Model):
 
 class Unit(models.Model):
     unit_id = models.AutoField(primary_key=True)
-    unit_name = models.CharField(max_length=50, blank=True, null=True)
+    unit_name = models.CharField(max_length=50, null=True)
     symbol = models.CharField(max_length=10, blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'unit'
+    
+    def __str__(self):
+        return str(self.unit_name)
+    
 
 
 class User(models.Model):

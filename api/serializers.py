@@ -1,6 +1,7 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 from django.contrib.auth.hashers import make_password
-from .models import User, Recipe, Review, Category, RecipeIngredients, Ingredient, Unit, Quantity, Nutrition
+from .models import User, Recipe, Review, Category, RecipeIngredients, Ingredient, Unit, Quantity, Nutrition, Cookbook, AddRecipe
 
 class UserSerializer(serializers.ModelSerializer):
     # Password should be write-only
@@ -29,9 +30,17 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ('category_id', 'r_type', 'r_region')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Category.objects.all(),
+                fields = ['r_type', 'r_region'],
+                message="That pair already exists."
+            )
+        ]
 
 
 class RecipeSerializer(serializers.ModelSerializer):
+    # Read-only
     category = CategorySerializer(read_only=True)
     r_type = serializers.CharField(source='category.r_type', read_only=True)
     r_region = serializers.CharField(source='category.r_region', read_only=True)
@@ -76,3 +85,47 @@ class NutritionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Nutrition
         fields = ('nutrition_id', 'protein_count', 'calorie_count', 'ingredient', 'unit', 'serving_size')
+
+class CookbookSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cookbook
+        fields = ('cb_id', 'cb_title', 'cb_description', 'num_of_saves')
+    
+class AddRecipeSerializer(serializers.ModelSerializer):
+    # Write-only
+    recipe_id = serializers.PrimaryKeyRelatedField(
+        queryset = Recipe.objects.all(),
+        source='recipe',
+        write_only=True
+    )
+    cb_id = serializers.PrimaryKeyRelatedField(
+        queryset = Cookbook.objects.all(),
+        source='cb',
+        write_only=True
+    )
+
+        # read‑only outputs:
+    recipe_name = serializers.CharField(
+        source='recipe.recipe_name',
+        read_only=True
+    )
+    cookbook = serializers.CharField(
+        source='cb.cb_title',
+        read_only=True
+    )
+    username = serializers.CharField(
+        source='user.username',
+        read_only=True
+    )
+
+    class Meta:
+        model = AddRecipe
+        fields = ('recipe_id', 'recipe_name', 'cb_id', 'cookbook', 'username')
+        read_only_fields = ('user')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=AddRecipe.objects.all(),
+                fields=('recipe', 'cb', 'user'),
+                message="You've already added that recipe to this cookbook."
+            )
+        ]
