@@ -9,12 +9,11 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from .serializers import CategorySerializer, IngredientSerializer, NutritionSerializer, QuantitySerializer, RecipeIngredientsSerializer, UnitSerializer, UserSerializer, RecipeSerializer, ReviewSerializer, AddRecipeSerializer, CookbookSerializer
 from .models import User, Recipe, Review, Category, RecipeIngredients, Ingredient, Unit, Quantity, Nutrition, AddRecipe, Cookbook
-from .filters import RecipeFilter
 
 
 # Create your views here.
 
-# ---------------Users---------------#
+# ---------------USERS Views---------------#
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -61,7 +60,7 @@ class LoginView(APIView):
         })
 
 
-# ---------------Recipes---------------#
+# ---------------RECIPE (and others) Views---------------#
 # List of categories
 class CategoryListView(generics.ListAPIView):
     queryset = Category.objects.all()
@@ -70,21 +69,16 @@ class CategoryListView(generics.ListAPIView):
 
 # Lists of recipes and their associated category/difficulty
 class RecipeListView(generics.ListAPIView):
-    queryset = Recipe.objects.all()
+    queryset = Recipe.objects.prefetch_related('category')
     serializer_class = RecipeSerializer
-    # categories for existing recipes not inserted, otherwise commented out code works
-    # queryset = Recipe.objects.select_related('category') 
-    # serializer_class = RecipeSerializer
-    # filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    # filterset_class = RecipeFilter
-    # search_fields = ['recipe_name', 'recipe_description']
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['category__category_id']
+    search_fields = ['recipe_name', 'recipe_description']
     permission_classes = []
 
 # Returns desired recipe with all fields and category
 class RecipeDetailView(generics.RetrieveAPIView):
-    # same problem, because no category mapped to a recipe
-    #queryset = Recipe.objects.select_related('category') 
-    queryset = Recipe.objects.all()
+    queryset = Recipe.objects.prefetch_related('category')
     serializer_class = RecipeSerializer
     lookup_field = 'recipe_id'
     lookup_url_kwarg = 'recipe_id'
@@ -110,7 +104,7 @@ class NutritionView(generics.ListAPIView):
     queryset = Nutrition.objects.all()
     serializer_class = NutritionSerializer
 
-# ---------------Cookbook---------------#
+# ---------------COOKBOOK VIEWS---------------#
 class CookbookListView(generics.ListAPIView):
     queryset = Cookbook.objects.all()
     serializer_class = CookbookSerializer

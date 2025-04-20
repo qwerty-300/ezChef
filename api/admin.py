@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, User, Recipe, RecipeIngredients, Ingredient, Quantity, Unit, Nutrition
+from .models import Category, User, Recipe, RecipeIngredients, Ingredient, Quantity, Unit, Nutrition, IdentifiedBy, Includes
 # Register your models here.
 
 @admin.register(User)
@@ -9,16 +9,23 @@ class UserAdmin(admin.ModelAdmin):
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('category_id', 'r_type', 'r_region')
-
+    search_fields = ('r_type', 'r_region')
 
 class RecipeIngredientsInline(admin.TabularInline):
     model = RecipeIngredients
     extra = 1
 
+class IdentifiedByInline(admin.TabularInline):
+    model = IdentifiedBy
+    extra = 1
+    autocomplete_fields = ('category',)
+
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('recipe_id', 'recipe_name', 'recipe_description', 'date_added', 'recipe_difficulty')
-    inlines = [RecipeIngredientsInline]
+    list_display = ('recipe_id', 'recipe_name', 'recipe_difficulty')
+    inlines = [RecipeIngredientsInline, IdentifiedByInline]
+    exclude = ('category',)
+
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
