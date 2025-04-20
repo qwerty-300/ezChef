@@ -1,17 +1,16 @@
-import React, { Component } from 'react';
-import { createRoot } from 'react-dom/client';
+import React from "react";
+import {Routes, Route, Navigate } from "react-router-dom";
+import AuthPage from "./Auth/AuthPage";
+import HomePage from "./Home/HomePage";
 
-export default class App extends Component {
-    constructor(props) {
-        super(props);
-    }
+const App = () => {
+    return (
+        <Routes>
+            <Route path="/" element={<AuthPage />} />
+            <Route path="/home" element={<HomePage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+    );
+};
 
-    render() {
-        return <h1>TESTING REACT CODE</h1>;
-    }
-}
-
-const container = document.getElementById('app');
-
-const root = createRoot(container);
-root.render(<App />);
+export default App;
