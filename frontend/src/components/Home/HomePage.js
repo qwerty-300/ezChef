@@ -31,14 +31,10 @@ const HomePage = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       console.log("Searching for:", searchQuery);
-      // In a real app, navigate to search results
-      // navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
     }
   };
 
   const handleLogout = () => {
-    // In a real app, remove auth token
-    // localStorage.removeItem("authToken");
     navigate("/");
   };
 
@@ -122,7 +118,7 @@ const HomePage = () => {
               icon={<CategoryIcon sx={{ fontSize: 60, color: "green" }} />}
               title="Categories"
               description="Browse recipes by category"
-              onClick={() => console.log("Categories clicked")}
+              onClick={() => navigate("/categories")}
             />
           </Grid>
           <Grid item xs={12} md={4}>

@@ -9,7 +9,9 @@ import {
   Box,
   Typography,
   Alert,
+  CircularProgress
 } from "@mui/material";
+import { useAuth } from "../Auth/AuthContext";
 
 const LoginForm = () => {
   const [formData, setFormData] = useState({
@@ -17,8 +19,10 @@ const LoginForm = () => {
     password: "",
   });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
+  const { setCurrentUser } = useAuth();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -31,10 +35,55 @@ const LoginForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    navigate("/home");
+    try {
+      const response = await fetch('/api/auth/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      // Store auth token in localStorage
+      localStorage.setItem('authToken', data.token);
+      localStorage.setItem('refreshToken', data.refresh);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
+      // Update auth context
+      setCurrentUser(data.user);
+      
+      // If remember me is checked, store username
+      if (rememberMe) {
+        localStorage.setItem('rememberedUser', formData.username);
+      } else {
+        localStorage.removeItem('rememberedUser');
+      }
+      
+      // Redirect to home page
+      navigate('/home');
+    } catch (err) {
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Check for remembered username on component mount
+  React.useEffect(() => {
+    const rememberedUser = localStorage.getItem('rememberedUser');
+    if (rememberedUser) {
+      setFormData(prev => ({ ...prev, username: rememberedUser }));
+      setRememberMe(true);
+    }
+  }, []);
 
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
@@ -55,6 +104,7 @@ const LoginForm = () => {
         autoFocus
         value={formData.username}
         onChange={handleChange}
+        disabled={loading}
       />
 
       <TextField
@@ -68,6 +118,7 @@ const LoginForm = () => {
         autoComplete="current-password"
         value={formData.password}
         onChange={handleChange}
+        disabled={loading}
       />
 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1 }}>
@@ -77,6 +128,7 @@ const LoginForm = () => {
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
               color="primary"
+              disabled={loading}
             />
           }
           label="Remember me"
@@ -86,8 +138,14 @@ const LoginForm = () => {
         </Link>
       </Box>
 
-      <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
-        Log In
+      <Button 
+        type="submit" 
+        fullWidth 
+        variant="contained" 
+        sx={{ mt: 3, mb: 2 }}
+        disabled={loading}
+      >
+        {loading ? <CircularProgress size={24} /> : 'Log In'}
       </Button>
     </Box>
   );

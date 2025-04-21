@@ -1,7 +1,18 @@
 from django.urls import path
-from .views import CategoryView, IngredientView, NutritionView, QuantityView, RecipeIngredientsView, ReviewView, UnitView, UserView, RecipeView
+from .views import (
+    CategoryView, IngredientView, NutritionView, QuantityView, 
+    RecipeIngredientsView, ReviewView, UnitView, UserView, RecipeView,
+    # authentication views
+    RegisterView, LoginView, RefreshTokenView, UserProfileView
+)
 
 urlpatterns = [
+    # Authentication endpoints
+    path('auth/register/', RegisterView.as_view(), name='register'),
+    path('auth/login/', LoginView.as_view(), name='login'),
+    path('auth/refresh/', RefreshTokenView.as_view(), name='token_refresh'),
+    path('user/profile/', UserProfileView.as_view(), name='user-profile'),
+    
     path('user/', UserView.as_view()),
     #path('client/', ClientView.as_view()), BROKEN
     path('recipe/', RecipeView.as_view()),
