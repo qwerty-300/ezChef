@@ -10,20 +10,21 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 #---------------ADD_RECIPE TABLE---------------#
 class AddRecipe(models.Model):
-    recipe = models.ForeignKey('Recipe', models.DO_NOTHING, blank=True, null=True)
-    user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
-    cb = models.ForeignKey('Cookbook', models.DO_NOTHING, blank=True, null=True)
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey('User', db_column='user_id', on_delete=models.DO_NOTHING, related_name='saved_recipes')
+    recipe = models.ForeignKey('Recipe', db_column='recipe_id', on_delete=models.DO_NOTHING, related_name='in_cookbooks')
+    cb = models.ForeignKey('Cookbook', db_column='cb_id', on_delete=models.DO_NOTHING, related_name='entries')
 
     class Meta:
-        managed = False
+        managed=False
         db_table = 'add_recipe'
+        unique_together = (('user', 'cb', 'recipe'),)
 
 #---------------ADMIN TABLE---------------#
 class Admin(models.Model):
     admin = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = 'admin'
 
 
@@ -103,7 +104,7 @@ class Category(models.Model):
     r_region = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed=False
         db_table = 'category'
     
     def __str__(self):
@@ -121,16 +122,15 @@ class Client(models.Model):
     user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed=False
         db_table = 'client'
 
 
 #---------------COOKBOOK TABLE---------------#
 class Cookbook(models.Model):
-    cb_id = models.IntegerField(primary_key=True)
+    cb_id = models.AutoField(primary_key=True)
     cb_title = models.CharField(max_length=30)
     cb_description = models.TextField(blank=True, null=True)
-    num_of_saves = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -150,25 +150,9 @@ class IdentifiedBy(models.Model):
     )
 
     class Meta:
-        managed = False
+        managed=False
         db_table = 'identified_by'
         unique_together = (('recipe', 'category'),) 
-
-    
-#---------------INCLUDES TABLE---------------#
-class Includes(models.Model):
-    id = models.AutoField(primary_key=True)
-    recipe = models.ForeignKey(
-        'Recipe', 
-        db_column='inc_r_id',
-        on_delete=models.DO_NOTHING, 
-        blank=True, 
-        null=True
-    )
-
-    class Meta:
-        managed = False
-        db_table = 'includes'
 
 
 #---------------INGREDIENT TABLE---------------#
@@ -177,7 +161,7 @@ class Ingredient(models.Model):
     ingredient_name = models.CharField(max_length=30)
 
     class Meta:
-        managed = False
+        managed=False
         db_table = 'ingredient'
 
     def __str__(self):
@@ -194,7 +178,7 @@ class Nutrition(models.Model):
     serving_size = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
-        managed = False
+        managed=False
         db_table = 'nutrition'
 
 
@@ -204,7 +188,7 @@ class Quantity(models.Model):
     quantity_amount = models.IntegerField()
 
     class Meta:
-        managed = False
+        managed=False
         db_table = 'quantity'
     
     def __str__(self):
@@ -229,8 +213,11 @@ class Recipe(models.Model):
     )
 
     class Meta:
-        managed = False
+        managed=False
         db_table = 'recipe'
+    
+    def __str__(self):
+        return self.recipe_name
 
 
 #---------------RECIPE_INGREDIENTS TABLE---------------#
@@ -242,9 +229,10 @@ class RecipeIngredients(models.Model):
     recipe = models.ForeignKey(Recipe, models.CASCADE)
 
     class Meta:
-        managed = False
+        managed=False
         db_table = 'recipe_ingredients'
         unique_together = (('recipe', 'ingredient', 'quantity'),)
+    
 
 
 #---------------UNIT TABLE---------------#
@@ -254,7 +242,7 @@ class Unit(models.Model):
     symbol = models.CharField(max_length=10, blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed=False
         db_table = 'unit'
     
     def __str__(self):
@@ -271,8 +259,11 @@ class User(models.Model):
     email = models.CharField(unique=True, max_length=40)
 
     class Meta:
-        managed = False
+        managed=False
         db_table = 'user'
+    
+    def __str__(self):
+        return self.username
 
 
 #---------------REVIEW TABLE---------------#
@@ -285,6 +276,6 @@ class Review(models.Model):
     date_created = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed=False
         db_table = 'review'
         unique_together = (('user_id', 'recipe'),)

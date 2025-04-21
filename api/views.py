@@ -6,6 +6,7 @@ from rest_framework.authtoken.models import Token
 
 from django.contrib.auth.hashers import check_password
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Count
 
 from .serializers import CategorySerializer, IngredientSerializer, NutritionSerializer, QuantitySerializer, RecipeIngredientsSerializer, UnitSerializer, UserSerializer, RecipeSerializer, ReviewSerializer, AddRecipeSerializer, CookbookSerializer
 from .models import User, Recipe, Review, Category, RecipeIngredients, Ingredient, Unit, Quantity, Nutrition, AddRecipe, Cookbook
@@ -14,51 +15,9 @@ from .models import User, Recipe, Review, Category, RecipeIngredients, Ingredien
 # Create your views here.
 
 # ---------------USERS Views---------------#
-class UserListView(generics.ListAPIView):
+class UserView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAdminUser]
-
-# Sign-up endpoint
-class SignupView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
-
-# Login endpoint
-class LoginView(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        if not username or not password:
-            return Response(
-                {"Detail": "Username and Password required."}, status = status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Checks if user exists
-        try:
-            user = User.objects.get(username=username)
-        except User.DoesNotExist:
-            return Response(
-                {"Detail": "Invalid credentials."}, status = status.HTTP_401_UNAUTHORIZED
-            )
-        
-        # Checks if input password is invalid
-        if not check_password(password, user.password):
-            return Response(
-                {"Detail": "Invalid credentials."}, status = status.HTTP_401_UNAUTHORIZED
-            )
-        
-        # Get/Create token for this user
-        token, _ = Token.objects.get_or_create(user_id=user.id)
-        return Response({
-            "token": token.key,
-            "user_id": user.id,
-            "username": user.username
-        })
-
 
 # ---------------RECIPE (and others) Views---------------#
 # List of categories

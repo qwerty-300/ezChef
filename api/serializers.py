@@ -100,6 +100,7 @@ class NutritionSerializer(serializers.ModelSerializer):
 
 #---------------COOKBOOK SERIALIZER---------------#
 class CookbookSerializer(serializers.ModelSerializer):
+    num_of_saves = serializers.IntegerField(read_only=True)
     class Meta:
         model = Cookbook
         fields = ('cb_id', 'cb_title', 'cb_description', 'num_of_saves')
@@ -107,43 +108,14 @@ class CookbookSerializer(serializers.ModelSerializer):
 
 #---------------ADD_RECIPE SERIALIZER---------------#    
 class AddRecipeSerializer(serializers.ModelSerializer):
-    # Write-only
-    recipe_id = serializers.PrimaryKeyRelatedField(
-        queryset = Recipe.objects.all(),
-        source='recipe',
-        write_only=True
-    )
-    cb_id = serializers.PrimaryKeyRelatedField(
-        queryset = Cookbook.objects.all(),
-        source='cb',
-        write_only=True
-    )
-
-        # read‑only outputs:
-    recipe_name = serializers.CharField(
-        source='recipe.recipe_name',
-        read_only=True
-    )
-    cookbook = serializers.CharField(
-        source='cb.cb_title',
-        read_only=True
-    )
-    username = serializers.CharField(
-        source='user.username',
-        read_only=True
+    recipe = serializers.PrimaryKeyRelatedField(
+        queryset = Recipe.objects.all()
     )
 
     class Meta:
         model = AddRecipe
-        fields = ('recipe_id', 'recipe_name', 'cb_id', 'cookbook', 'username')
-        read_only_fields = ('user')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=AddRecipe.objects.all(),
-                fields=('recipe', 'cb', 'user'),
-                message="You've already added that recipe to this cookbook."
-            )
-        ]
+        fields = ('id', 'recipe')
+        read_only_fields = ('id')
 
 
 #---------------REVIEW SERIALIZER---------------#
