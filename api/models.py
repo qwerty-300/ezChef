@@ -7,274 +7,114 @@
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
 
-
-class AddRecipe(models.Model):
-    recipe = models.ForeignKey('Recipe', models.DO_NOTHING, blank=True, null=True)
-    user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
-    cb = models.ForeignKey('Cookbook', models.DO_NOTHING, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'add_recipe'
-
-
-class Admin(models.Model):
-    admin = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
+class User(models.Model):
+    username = models.CharField(max_length=20, unique=True)
+    password = models.CharField(max_length=255)
+    f_name = models.CharField(max_length=15)
+    l_name = models.CharField(max_length=15)
+    date_of_birth = models.DateField(null=True, blank=True)
+    email = models.CharField(max_length=40, unique=True)
 
     class Meta:
-        managed = False
-        db_table = 'admin'
+        db_table = 'user'
+        managed = False  # Tells Django not to manage this table
 
-
-class AuthGroup(models.Model):
-    name = models.CharField(unique=True, max_length=150)
-
-    class Meta:
-        managed = False
-        db_table = 'auth_group'
-
-
-class AuthGroupPermissions(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    group = models.ForeignKey(AuthGroup, models.DO_NOTHING)
-    permission = models.ForeignKey('AuthPermission', models.DO_NOTHING)
+class Recipe(models.Model):
+    recipe_id = models.AutoField(primary_key=True)
+    recipe_name = models.CharField(max_length=50)
+    recipe_description = models.TextField()
+    date_added = models.DateTimeField(auto_now_add=True)
+    recipe_difficulty = models.PositiveSmallIntegerField(null=True)
 
     class Meta:
+        db_table = 'recipe'
         managed = False
-        db_table = 'auth_group_permissions'
-        unique_together = (('group', 'permission'),)
-
-
-class AuthPermission(models.Model):
-    name = models.CharField(max_length=255)
-    content_type = models.ForeignKey('DjangoContentType', models.DO_NOTHING)
-    codename = models.CharField(max_length=100)
-
-    class Meta:
-        managed = False
-        db_table = 'auth_permission'
-        unique_together = (('content_type', 'codename'),)
-
-
-class AuthUser(models.Model):
-    password = models.CharField(max_length=128)
-    last_login = models.DateTimeField(blank=True, null=True)
-    is_superuser = models.IntegerField()
-    username = models.CharField(unique=True, max_length=150)
-    first_name = models.CharField(max_length=150)
-    last_name = models.CharField(max_length=150)
-    email = models.CharField(max_length=254)
-    is_staff = models.IntegerField()
-    is_active = models.IntegerField()
-    date_joined = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'auth_user'
-
-
-class AuthUserGroups(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    user = models.ForeignKey(AuthUser, models.DO_NOTHING)
-    group = models.ForeignKey(AuthGroup, models.DO_NOTHING)
-
-    class Meta:
-        managed = False
-        db_table = 'auth_user_groups'
-        unique_together = (('user', 'group'),)
-
-
-class AuthUserUserPermissions(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    user = models.ForeignKey(AuthUser, models.DO_NOTHING)
-    permission = models.ForeignKey(AuthPermission, models.DO_NOTHING)
-
-    class Meta:
-        managed = False
-        db_table = 'auth_user_user_permissions'
-        unique_together = (('user', 'permission'),)
-
 
 class Category(models.Model):
     category_id = models.AutoField(primary_key=True)
-    r_type = models.CharField(max_length=100, blank=True, null=True)
-    r_region = models.CharField(max_length=100, blank=True, null=True)
+    r_type = models.CharField(max_length=100, null=True)
+    r_region = models.CharField(max_length=100, null=True)
 
     class Meta:
-        managed = False
         db_table = 'category'
+        managed = False
         unique_together = (('r_type', 'r_region'),)
-
-
-class Client(models.Model):
-    user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'client'
-
-
-class Cookbook(models.Model):
-    cb_id = models.IntegerField(primary_key=True)
-    cb_title = models.CharField(max_length=30)
-    cb_description = models.TextField(blank=True, null=True)
-    num_of_saves = models.IntegerField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'cookbook'
-
-
-class DjangoAdminLog(models.Model):
-    action_time = models.DateTimeField()
-    object_id = models.TextField(blank=True, null=True)
-    object_repr = models.CharField(max_length=200)
-    action_flag = models.PositiveSmallIntegerField()
-    change_message = models.TextField()
-    content_type = models.ForeignKey('DjangoContentType', models.DO_NOTHING, blank=True, null=True)
-    user = models.ForeignKey(AuthUser, models.DO_NOTHING)
-
-    class Meta:
-        managed = False
-        db_table = 'django_admin_log'
-
-
-class DjangoContentType(models.Model):
-    app_label = models.CharField(max_length=100)
-    model = models.CharField(max_length=100)
-
-    class Meta:
-        managed = False
-        db_table = 'django_content_type'
-        unique_together = (('app_label', 'model'),)
-
-
-class DjangoMigrations(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    app = models.CharField(max_length=255)
-    name = models.CharField(max_length=255)
-    applied = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'django_migrations'
-
-
-class DjangoSession(models.Model):
-    session_key = models.CharField(primary_key=True, max_length=40)
-    session_data = models.TextField()
-    expire_date = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'django_session'
-
-
-class IdentifiedBy(models.Model):
-    ib_r = models.ForeignKey('Recipe', models.DO_NOTHING, blank=True, null=True)
-    ib_c = models.ForeignKey(Category, models.DO_NOTHING, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'identified_by'
-
-
-class Includes(models.Model):
-    inc_r = models.ForeignKey('Recipe', models.DO_NOTHING, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'includes'
-
 
 class Ingredient(models.Model):
     ingredient_id = models.AutoField(primary_key=True)
     ingredient_name = models.CharField(max_length=30)
 
     class Meta:
-        managed = False
         db_table = 'ingredient'
+        managed = False
 
-
-class Nutrition(models.Model):
-    nutrition_id = models.AutoField(primary_key=True)
-    protein_count = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    calorie_count = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    ingredient = models.ForeignKey(Ingredient, models.DO_NOTHING, blank=True, null=True)
-    unit = models.ForeignKey('Unit', models.DO_NOTHING)
-    serving_size = models.DecimalField(max_digits=10, decimal_places=2)
+class Unit(models.Model):
+    unit_id = models.AutoField(primary_key=True)
+    unit_name = models.CharField(max_length=50, null=True)
+    symbol = models.CharField(max_length=10, null=True)
 
     class Meta:
+        db_table = 'unit'
         managed = False
-        db_table = 'nutrition'
-
 
 class Quantity(models.Model):
     quantity_id = models.IntegerField(primary_key=True)
     quantity_amount = models.IntegerField()
 
     class Meta:
-        managed = False
         db_table = 'quantity'
+        managed = False
 
-
-class Recipe(models.Model):
-    recipe_id = models.AutoField(primary_key=True)
-    recipe_name = models.CharField(max_length=50)
-    recipe_description = models.TextField()
-    date_added = models.DateTimeField(blank=True, null=True)
-    recipe_difficulty = models.PositiveIntegerField(blank=True, null=True)
+class RecipeIngredient(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, primary_key=True)
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    quantity = models.ForeignKey(Quantity, on_delete=models.CASCADE)
+    unit = models.ForeignKey(Unit, on_delete=models.CASCADE, null=True)
 
     class Meta:
-        managed = False
-        db_table = 'recipe'
-
-
-class RecipeIngredients(models.Model):
-    pk = models.CompositePrimaryKey('recipe_id', 'ingredient_id', 'quantity_id')
-    recipe = models.ForeignKey(Recipe, models.DO_NOTHING)
-    ingredient = models.ForeignKey(Ingredient, models.DO_NOTHING)
-    quantity = models.ForeignKey(Quantity, models.DO_NOTHING)
-    unit = models.ForeignKey('Unit', models.DO_NOTHING, blank=True, null=True)
-
-    class Meta:
-        managed = False
         db_table = 'recipe_ingredients'
+        managed = False
         unique_together = (('recipe', 'ingredient', 'quantity'),)
 
-
-class Unit(models.Model):
-    unit_id = models.AutoField(primary_key=True)
-    unit_name = models.CharField(max_length=50, blank=True, null=True)
-    symbol = models.CharField(max_length=10, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'unit'
-
-
-class User(models.Model):
-    username = models.CharField(unique=True, max_length=20)
-    password = models.CharField(max_length=255)
-    f_name = models.CharField(max_length=15)
-    l_name = models.CharField(max_length=15)
-    date_of_birth = models.DateField(blank=True, null=True)
-    email = models.CharField(unique=True, max_length=40)
+class Nutrition(models.Model):
+    nutrition_id = models.AutoField(primary_key=True)
+    protein_count = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    calorie_count = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE, null=True)
+    unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
+    serving_size = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
+        db_table = 'nutrition'
         managed = False
-        db_table = 'user'
-
 
 class Review(models.Model):
-    review = models.ForeignKey('User', models.DO_NOTHING)
-    user_id = models.IntegerField()
-    recipe = models.ForeignKey('Recipe', models.DO_NOTHING)
-    rating = models.PositiveIntegerField()
-    comment = models.TextField(blank=True, null=True)
-    date_created = models.DateTimeField(blank=True, null=True)
+    review_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    rating = models.PositiveSmallIntegerField()
+    comment = models.TextField(null=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        managed = False
         db_table = 'review'
-        unique_together = (('user_id', 'recipe'),)
+        managed = False
+        unique_together = (('user', 'recipe'),)
+
+class Cookbook(models.Model):
+    cb_id = models.IntegerField(primary_key=True)
+    cb_title = models.CharField(max_length=30)
+    cb_description = models.TextField(null=True)
+    num_of_saves = models.IntegerField(null=True)
+
+    class Meta:
+        db_table = 'cookbook'
+        managed = False
+
+class IdentifiedBy(models.Model):
+    ib_r_id = models.ForeignKey(Recipe, db_column='ib_r_id', on_delete=models.CASCADE)
+    ib_c_id = models.ForeignKey(Category, db_column='ib_c_id', on_delete=models.CASCADE)
+    
+    class Meta:
+        db_table = 'identified_by'
+        managed = False

@@ -1,5 +1,4 @@
-// src/components/Home/HomePage.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AppBar,
@@ -14,6 +13,13 @@ import {
   Card,
   CardContent,
   CardActions,
+  Avatar,
+  CardMedia,
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -21,20 +27,55 @@ import {
   MenuBook as MenuBookIcon,
   Category as CategoryIcon,
   Restaurant as RestaurantIcon,
+  Add as AddIcon,
+  Bookmark as BookmarkIcon,
+  Star as StarIcon
 } from "@mui/icons-material";
+import { useAuth } from "../Auth/AuthContext";
 
 const HomePage = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [recentRecipes, setRecentRecipes] = useState([]);
+  const [popularRecipes, setPopularRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { currentUser, logout } = useAuth();
+
+  useEffect(() => {
+    const fetchHomeData = async () => {
+      try {
+        setLoading(true);
+        
+        // Replace with actual API calls when backend is implemented
+        const recentResponse = await fetch('/api/recipes?sort=newest&limit=3');
+        const popularResponse = await fetch('/api/recipes?sort=popular&limit=3');
+        
+        if (recentResponse.ok && popularResponse.ok) {
+          const recentData = await recentResponse.json();
+          const popularData = await popularResponse.json();
+          
+          setRecentRecipes(recentData);
+          setPopularRecipes(popularData);
+        }
+      } catch (err) {
+        console.error('Error fetching home data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchHomeData();
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      console.log("Searching for:", searchQuery);
+      navigate(`/recipes?search=${encodeURIComponent(searchQuery)}`);
     }
   };
 
   const handleLogout = () => {
+    logout();
     navigate("/");
   };
 
@@ -59,6 +100,43 @@ const HomePage = () => {
     </Card>
   );
 
+  const RecipePreview = ({ recipe, index }) => (
+    <Card 
+      sx={{ 
+        display: 'flex', 
+        mb: 2, 
+        cursor: 'pointer',
+        transition: "transform 0.2s",
+        "&:hover": {
+          transform: "translateX(5px)",
+        } 
+      }}
+      onClick={() => navigate(`/recipe/${recipe.recipeId}`)}
+    >
+      <CardMedia
+        component="img"
+        sx={{ width: 120 }}
+        image={recipe.image || `https://source.unsplash.com/random?food,${index}`}
+        alt={recipe.name}
+      />
+      <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+        <CardContent sx={{ flex: '1 0 auto' }}>
+          <Typography component="div" variant="h6">
+            {recipe.name}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" component="div">
+            {recipe.description.length > 60 
+              ? `${recipe.description.substring(0, 60)}...` 
+              : recipe.description}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" component="div" sx={{ mt: 1 }}>
+            {new Date(recipe.dateAdded).toLocaleDateString()}
+          </Typography>
+        </CardContent>
+      </Box>
+    </Card>
+  );
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       {/* Navigation Bar */}
@@ -67,12 +145,26 @@ const HomePage = () => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "green" }}>
             ezChef
           </Typography>
-          <Typography variant="body1" sx={{ mr: 2 }}>
-            Hello, User
-          </Typography>
-          <IconButton color="inherit" onClick={handleLogout}>
-            <LogoutIcon />
-          </IconButton>
+          {currentUser && (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Avatar 
+                sx={{ 
+                  width: 32, 
+                  height: 32, 
+                  bgcolor: 'primary.main',
+                  mr: 1
+                }}
+              >
+                {currentUser.f_name ? currentUser.f_name.charAt(0) : ""}
+              </Avatar>
+              <Typography variant="body1" sx={{ mr: 2 }}>
+                {currentUser.username || "User"}
+              </Typography>
+              <IconButton color="inherit" onClick={handleLogout} title="Logout">
+                <LogoutIcon />
+              </IconButton>
+            </Box>
+          )}
         </Toolbar>
       </AppBar>
 
@@ -112,7 +204,7 @@ const HomePage = () => {
         </Box>
 
         {/* Feature Cards */}
-        <Grid container spacing={4}>
+        <Grid container spacing={4} sx={{ mb: 6 }}>
           <Grid item xs={12} md={4}>
             <FeatureCard
               icon={<CategoryIcon sx={{ fontSize: 60, color: "green" }} />}
@@ -126,16 +218,101 @@ const HomePage = () => {
               icon={<MenuBookIcon sx={{ fontSize: 60, color: "green" }} />}
               title="Cookbook"
               description="Access your saved recipes"
-              onClick={() => console.log("Cookbook clicked")}
+              onClick={() => navigate("/cookbooks")}
             />
           </Grid>
           <Grid item xs={12} md={4}>
             <FeatureCard
               icon={<RestaurantIcon sx={{ fontSize: 60, color: "green" }} />}
-              title="Chef Mode"
-              description="Get step-by-step cooking guidance"
-              onClick={() => console.log("Chef Mode clicked")}
+              title="All Recipes"
+              description="Explore all available recipes"
+              onClick={() => navigate("/recipes")}
             />
+          </Grid>
+        </Grid>
+        
+        {/* Quick Actions */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 6 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            size="large"
+            onClick={() => navigate("/recipe/create")}
+            sx={{ mx: 1 }}
+          >
+            Create Recipe
+          </Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<BookmarkIcon />}
+            size="large"
+            onClick={() => navigate("/cookbooks")}
+            sx={{ mx: 1 }}
+          >
+            My Cookbooks
+          </Button>
+        </Box>
+        
+        <Divider sx={{ mb: 4 }} />
+        
+        {/* Recipe Previews */}
+        <Grid container spacing={4}>
+          {/* Recently Added Recipes */}
+          <Grid item xs={12} md={6}>
+            <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+              <AddIcon sx={{ mr: 1 }} /> Recently Added
+            </Typography>
+            {loading ? (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Typography>Loading...</Typography>
+              </Box>
+            ) : recentRecipes.length > 0 ? (
+              recentRecipes.map((recipe, index) => (
+                <RecipePreview key={recipe.recipeId} recipe={recipe} index={index} />
+              ))
+            ) : (
+              <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
+                No recent recipes found
+              </Typography>
+            )}
+            <Box sx={{ textAlign: 'right', mt: 2 }}>
+              <Button 
+                variant="text" 
+                onClick={() => navigate("/recipes?sort=newest")}
+              >
+                View All Recent
+              </Button>
+            </Box>
+          </Grid>
+          
+          {/* Popular Recipes */}
+          <Grid item xs={12} md={6}>
+            <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+              <StarIcon sx={{ mr: 1 }} /> Most Popular
+            </Typography>
+            {loading ? (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Typography>Loading...</Typography>
+              </Box>
+            ) : popularRecipes.length > 0 ? (
+              popularRecipes.map((recipe, index) => (
+                <RecipePreview key={recipe.recipeId} recipe={recipe} index={index + 3} />
+              ))
+            ) : (
+              <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
+                No popular recipes found
+              </Typography>
+            )}
+            <Box sx={{ textAlign: 'right', mt: 2 }}>
+              <Button 
+                variant="text" 
+                onClick={() => navigate("/recipes?sort=highest_rated")}
+              >
+                View All Popular
+              </Button>
+            </Box>
           </Grid>
         </Grid>
       </Container>
