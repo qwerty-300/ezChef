@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { useAuth } from "../Auth/AuthContext";
 
-// helper to read the CSRF cookie
+// Helper to read the CSRF cookie
 function getCookie(name) {
   const match = document.cookie.match(new RegExp('(^|; )' + name + '=([^;]*)'));
   return match ? decodeURIComponent(match[2]) : null;

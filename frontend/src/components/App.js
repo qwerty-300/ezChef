@@ -35,7 +35,7 @@ const App = () => {
                     } 
                 />
                 <Route 
-                    path="/category/:categoryId" 
+                    path="/categories/:categoryId" 
                     element={
                         <ProtectedRoute>
                             <CategoryDetailPage />

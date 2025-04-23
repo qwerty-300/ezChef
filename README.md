@@ -1,2 +1,2 @@
 # ezChef
-A recipes app
+Welcome to ezChef

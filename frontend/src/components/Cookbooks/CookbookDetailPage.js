@@ -228,8 +228,6 @@ const CookbookDetailPage = () => {
     try {
       setLoadingAvailableRecipes(true);
       
-      // Replace with actual API call when backend is implemented
-      // This should get recipes that are not already in the cookbook
       const response = await fetch(`/api/recipes?notInCookbook=${cookbookId}`);
       
       if (!response.ok) {

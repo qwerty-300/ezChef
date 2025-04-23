@@ -162,7 +162,7 @@ const EditRecipePage = () => {
         ...prev.ingredients,
         {
           ...newIngredient,
-          id: Date.now()  // temporary ID for the UI
+          id: Date.now()  
         }
       ]
     }));

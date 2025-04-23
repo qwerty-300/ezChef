@@ -38,7 +38,6 @@ import {
 
 const RecipesPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [recipes, setRecipes] = useState([]);
   const [filteredRecipes, setFilteredRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,27 +46,18 @@ const RecipesPage = () => {
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [regionFilter, setRegionFilter] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("");
   const [sortBy, setSortBy] = useState("newest");
-  
-  // Category options that would come from the API
+
   const [categories, setCategories] = useState([]);
-  const [regions, setRegions] = useState([]);
   
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        // replace w api calls
-        setCategories([
-          "Breakfast", "Lunch", "Dinner", "Appetizer", "Soup", 
-          "Salad", "Main Course", "Side Dish", "Dessert", "Snack", "Beverage"
-        ]);
-        
-        setRegions([
-          "American", "Italian", "Mexican", "Chinese", "Japanese", 
-          "Indian", "French", "Thai", "Mediterranean", "Middle Eastern"
-        ]);
+        const res = await fetch("/api/categories/");
+        if (!res.ok) throw new Error("Failed to load categories");
+        const data = await res.json();
+        setCategories(data.map(c => c.catname));
       } catch (err) {
         console.error('Error fetching categories:', err);
       }
@@ -81,7 +71,6 @@ const RecipesPage = () => {
       try {
         setLoading(true);
         
-        // Replace with actual API call when backend is implemented
         const response = await fetch('/api/recipes');
         
         if (!response.ok) {
@@ -110,8 +99,6 @@ const RecipesPage = () => {
     if (searchQuery) {
       const lowercase = searchQuery.toLowerCase();
       filtered = filtered.filter(recipe => {
-        // recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        // recipe.description.toLowerCase().includes(searchQuery.toLowerCase())
         const nameMatch = recipe.name?.toLowerCase().includes(lowercase);
         const desc = recipe.description ?? "";
         const descMatch = desc.toLowerCase().includes(lowercase);
@@ -121,15 +108,8 @@ const RecipesPage = () => {
     
     // Category filter
     if (categoryFilter) {
-      filtered = filtered.filter(
-        recipe => recipe.category?.type === categoryFilter // Added ?
-      );
-    }
-    
-    // Region filter
-    if (regionFilter) {
-      filtered = filtered.filter(
-        recipe => recipe.category?.region === regionFilter // Added ?
+      filtered = filtered.filter(recipe => 
+          (recipe.category || []).some(c => c.cat_name === categoryFilter)
       );
     }
     
@@ -168,7 +148,8 @@ const RecipesPage = () => {
     }
     
     setFilteredRecipes(filtered);
-  }, [recipes, searchQuery, categoryFilter, regionFilter, difficultyFilter, sortBy]);
+  }, [recipes, searchQuery, categoryFilter, difficultyFilter, sortBy]);
+  
   
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
@@ -176,10 +157,6 @@ const RecipesPage = () => {
   
   const handleCategoryChange = (e) => {
     setCategoryFilter(e.target.value);
-  };
-  
-  const handleRegionChange = (e) => {
-    setRegionFilter(e.target.value);
   };
   
   const handleDifficultyChange = (e) => {
@@ -193,7 +170,6 @@ const RecipesPage = () => {
   const clearFilters = () => {
     setSearchQuery("");
     setCategoryFilter("");
-    setRegionFilter("");
     setDifficultyFilter("");
     setSortBy("newest");
   };
@@ -284,7 +260,7 @@ const RecipesPage = () => {
             <Grid item xs={12} md={8}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={3}>
-                  <FormControl fullWidth size="small">
+                  <FormControl variant="outlined" sx={{ width: "fit-content", minWidth: 0 }}>
                     <InputLabel>Category</InputLabel>
                     <Select
                       value={categoryFilter}
@@ -302,25 +278,7 @@ const RecipesPage = () => {
                 </Grid>
                 
                 <Grid item xs={12} sm={3}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Region</InputLabel>
-                    <Select
-                      value={regionFilter}
-                      onChange={handleRegionChange}
-                      label="Region"
-                    >
-                      <MenuItem value="">All Regions</MenuItem>
-                      {regions.map((region) => (
-                        <MenuItem key={region} value={region}>
-                          {region}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                
-                <Grid item xs={12} sm={3}>
-                  <FormControl fullWidth size="small">
+                  <FormControl variant="outlined" sx={{ width: "fit-content", minWidth: 0 }}>
                     <InputLabel>Difficulty</InputLabel>
                     <Select
                       value={difficultyFilter}
@@ -338,7 +296,7 @@ const RecipesPage = () => {
                 </Grid>
                 
                 <Grid item xs={12} sm={3}>
-                  <FormControl fullWidth size="small">
+                  <FormControl variant="outlined" sx={{ width: "fit-content", minWidth: 0 }}>
                     <InputLabel>Sort By</InputLabel>
                     <Select
                       value={sortBy}
@@ -358,7 +316,7 @@ const RecipesPage = () => {
           </Grid>
           
           {/* Clear Filters Button */}
-          {(searchQuery || categoryFilter || regionFilter || difficultyFilter || sortBy !== "newest") && (
+          {(searchQuery || categoryFilter || difficultyFilter || sortBy !== "newest") && (
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
               <Button
                 variant="outlined"
@@ -406,7 +364,7 @@ const RecipesPage = () => {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
               Try adjusting your filters or search criteria
             </Typography>
-            {searchQuery || categoryFilter || regionFilter || difficultyFilter ? (
+            {searchQuery || categoryFilter || difficultyFilter ? (
               <Button
                 variant="outlined"
                 onClick={clearFilters}
@@ -472,18 +430,9 @@ const RecipesPage = () => {
                       </Typography>
                       
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                        <Chip
-                          label={recipe.category.type}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                        />
-                        <Chip
-                          label={recipe.category.region}
-                          size="small"
-                          color="secondary"
-                          variant="outlined"
-                        />
+                          {(recipe.category || []).map((c, i) => (
+                            <Chip key={i} label={c.catname} size="small" variant="outlined" />
+                          ))}
                       </Box>
                       
                       <Divider sx={{ mb: 2 }} />

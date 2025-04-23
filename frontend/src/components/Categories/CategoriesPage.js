@@ -7,7 +7,6 @@ import {
     Grid,
     Card,
     CardContent,
-    CardMedia,
     CardActionArea,
     Button,
     TextField,
@@ -27,93 +26,6 @@ import {
     Home as HomeIcon
   } from "@mui/icons-material";
 
-  const SAMPLE_CATEGORIES = [
-    {
-        id: 1,
-        name: "Breakfast",
-        description: "Start your day with these delicious breakfast recipes",
-        image: "https://potatorolls.com/wp-content/uploads/Lumberjack-Breakfast2-960x640.jpg",
-        recipeCount: 42
-    },
-    {
-        id: 2,
-        name: "Lunch",
-        description: "Quick and easy lunch ideas for busy days",
-        image: "https://source.unsplash.com/random?lunch",
-        recipeCount: 37
-      },
-      {
-        id: 3,
-        name: "Dinner",
-        description: "Impressive dinner recipes for any occasion",
-        image: "https://source.unsplash.com/random?dinner",
-        recipeCount: 58
-      },
-      {
-        id: 4,
-        name: "Desserts",
-        description: "Sweet treats to satisfy your cravings",
-        image: "https://source.unsplash.com/random?dessert",
-        recipeCount: 64
-      },
-      {
-        id: 5,
-        name: "Vegetarian",
-        description: "Delicious meat-free meals for everyone",
-        image: "https://source.unsplash.com/random?vegetarian",
-        recipeCount: 45
-      },
-      {
-        id: 6,
-        name: "Vegan",
-        description: "Plant-based recipes that don't compromise on flavor",
-        image: "https://source.unsplash.com/random?vegan",
-        recipeCount: 38
-      },
-      {
-        id: 7,
-        name: "Gluten-Free",
-        description: "Gluten-free recipes that taste amazing",
-        image: "https://source.unsplash.com/random?glutenfree",
-        recipeCount: 29
-      },
-      {
-        id: 8,
-        name: "Quick & Easy",
-        description: "Recipes ready in 30 minutes or less",
-        image: "https://source.unsplash.com/random?quickmeal",
-        recipeCount: 52
-      },
-      {
-        id: 9,
-        name: "Healthy",
-        description: "Nutritious recipes for a balanced diet",
-        image: "https://source.unsplash.com/random?healthyfood",
-        recipeCount: 47
-      },
-      {
-        id: 10,
-        name: "Baking",
-        description: "Breads, pastries, and other baked goods",
-        image: "https://source.unsplash.com/random?baking",
-        recipeCount: 33
-      },
-      {
-        id: 11,
-        name: "International",
-        description: "Explore cuisines from around the world",
-        image: "https://source.unsplash.com/random?international",
-        recipeCount: 70
-      },
-      {
-        id: 12,
-        name: "Drinks",
-        description: "Refreshing beverages for any occasion",
-        image: "https://source.unsplash.com/random?drinks",
-        recipeCount: 28
-      }
-  ];
-
   const CategoriesPage = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -122,30 +34,44 @@ import {
     const navigate = useNavigate();
   
     useEffect(() => {
-      // Simulate API call with setTimeout
-      const fetchCategories = () => {
-        setLoading(true);
-        // In a real app, replace this with an actual API call
-        setTimeout(() => {
-          setCategories(SAMPLE_CATEGORIES);
-          setLoading(false);
-        }, 1000);
-      };
-  
-      fetchCategories();
+
+      const fetchCategories = async () => {
+          setLoading(true);
+          try {
+            const res = await fetch('/api/categories/'); 
+            if (!res.ok) throw new Error(`Status ${res.status}`);
+            const data = await res.json();
+    
+            // Map to real fields
+            const cats = data.map(cat => ({
+              id: cat.categoryId,
+              name: cat.catname
+            }));
+    
+            console.log('Mapped categories:', cats);
+            setCategories(cats);
+          } catch (err) {
+            console.error('Error loading categories:', err);
+            setError('Failed to load categories');
+          } finally {
+            setLoading(false);
+          }
+        };
+    
+        fetchCategories();  
     }, []);
   
     const handleCategoryClick = (categoryId) => {
       // Navigate to category detail page
-      navigate(`/category/${categoryId}`);
+      navigate(`/categories/${categoryId}`);
     };
   
     const handleSearch = (e) => {
       setSearchQuery(e.target.value);
     };
   
-    const filteredCategories = categories.filter((category) =>
-      category.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredCategories = categories.filter(cat => 
+      cat.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   
     return (
@@ -246,26 +172,9 @@ import {
                     }}
                   >
                     <CardActionArea onClick={() => handleCategoryClick(category.id)}>
-                      <CardMedia
-                        component="img"
-                        height="140"
-                        image={category.image}
-                        alt={category.name}
-                      />
-                      <CardContent sx={{ flexGrow: 1 }}>
-                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                          <Typography gutterBottom variant="h6" component="div">
-                            {category.name}
-                          </Typography>
-                          <Chip 
-                            label={`${category.recipeCount} recipes`} 
-                            size="small" 
-                            color="primary" 
-                            variant="outlined" 
-                          />
-                        </Box>
-                        <Typography variant="body2" color="text.secondary">
-                          {category.description}
+                      <CardContent sx={{ flexGrow: 1, textAlign: 'center', py: 4 }}>
+                        <Typography gutterBottom variant="h6" component="div">
+                          {category.name}
                         </Typography>
                       </CardContent>
                     </CardActionArea>

@@ -23,21 +23,14 @@ class Admin(models.Model):
 #---------------CATEGORY TABLE---------------#
 class Category(models.Model):
     category_id = models.AutoField(primary_key=True)
-    r_type = models.CharField(max_length=100, blank=True, null=True)
-    r_region = models.CharField(max_length=100, blank=True, null=True)
+    cat_name = models.CharField(max_length=50, unique=True)
 
     class Meta:
         managed=False
         db_table = 'category'
     
     def __str__(self):
-        if self.r_type and self.r_region:
-            return f"{self.r_type} ({self.r_region})"
-        if self.r_region:
-            return self.r_region
-        else:
-            return self.r_type
-        return f"Category {self.category_id}"
+        return self.cat_name
 
 #---------------CLIENT TABLE---------------#
 class Client(models.Model):
@@ -184,9 +177,10 @@ class User(models.Model):
 
 #---------------REVIEW TABLE---------------#
 class Review(models.Model):
+    review_id = models.AutoField(primary_key=True, db_column='review_id')
     user = models.ForeignKey('User', on_delete=models.DO_NOTHING)
     recipe = models.ForeignKey('Recipe', on_delete=models.DO_NOTHING, null=True, blank=True)
-    cookbook = models.ForeignKey('Cookbook', on_delete=models.DO_NOTHING, null=True, blank=True)
+    # cookbook = models.ForeignKey('Cookbook', on_delete=models.DO_NOTHING, null=True, blank=True)
     rating = models.PositiveIntegerField()
     comment = models.TextField(blank=True, null=True)
     date_created = models.DateTimeField(blank=True, null=True)
@@ -194,4 +188,4 @@ class Review(models.Model):
     class Meta:
         managed=False
         db_table = 'review'
-        unique_together = (('user', 'recipe'), ('user', 'cookbook'))
+        unique_together = (('user', 'recipe'),) # removed user, cookbook tuple

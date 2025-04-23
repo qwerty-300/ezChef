@@ -1,9 +1,9 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth.hashers import make_password, check_password
-from .serializers import CategorySerializer, IngredientSerializer, NutritionSerializer, QuantitySerializer, RecipeIngredientsSerializer, UnitSerializer, UserSerializer, RecipeSerializer, ReviewSerializer, CookbookSerializer, AddRecipeSerializer
+from .serializers import CategorySerializer, IngredientSerializer, NutritionSerializer, QuantitySerializer, RecipeIngredientsSerializer, UnitSerializer, UserSerializer, RecipeListSerializer, RecipeDetailSerializer, ReviewSerializer, CookbookSerializer, AddRecipeSerializer
 from .models import User, Recipe, Review, Category, RecipeIngredients, Ingredient, Unit, Quantity, Nutrition, Cookbook, IdentifiedBy
 
 #--------------AUTHENTICATION VIEWS---------------#
@@ -71,8 +71,6 @@ class LoginView(APIView):
             # Password is hashed and matches
             pass
         elif user.password == password:
-            # For non-hashed passwords (development only)
-            # In production, you should ensure all passwords are hashed
             pass
         else:
             return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -142,10 +140,6 @@ class UserView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-class RecipeView(generics.CreateAPIView):
-    queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
-
 class ReviewView(generics.ListAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
@@ -184,8 +178,7 @@ class RecipeListView(APIView):
         sort = request.query_params.get('sort', 'newest')
         limit = request.query_params.get('limit', None)
         search = request.query_params.get('search', None)
-        category_type = request.query_params.get('type', None)
-        region = request.query_params.get('region', None)
+        cat = request.query_params.get('cat_name', None)
         difficulty = request.query_params.get('difficulty', None)
         
         # Start with all recipes
@@ -196,18 +189,8 @@ class RecipeListView(APIView):
             recipes = recipes.filter(recipe_name__icontains=search) | recipes.filter(recipe_description__icontains=search)
         
         # Apply category filters
-        if category_type or region:
-            # Get IDs of recipes with matching category
-            matching_categories = Category.objects.all()
-            if category_type:
-                matching_categories = matching_categories.filter(r_type=category_type)
-            if region:
-                matching_categories = matching_categories.filter(r_region=region)
-            
-            # Filter recipes by these categories
-            from django.db.models import Q
-            category_ids = matching_categories.values_list('category_id', flat=True)
-            recipes = recipes.filter(Q(identified_by__ib_c_id__in=category_ids))
+        if cat:
+            recipes = recipes.filter(category__cat_name___iexact=cat)
         
         # Apply difficulty filter
         if difficulty:
@@ -218,37 +201,24 @@ class RecipeListView(APIView):
             recipes = recipes.order_by('-date_added')
         elif sort == 'oldest':
             recipes = recipes.order_by('date_added')
-        # You can add more sorting options as needed
         
-        # Apply limit if provided
+        # Apply limit 
         if limit:
             recipes = recipes[:int(limit)]
         
-        serializer = RecipeSerializer(recipes, many=True)
+        serializer = RecipeListSerializer(recipes, many=True)
         
         # Add category and user data to each recipe
         for i, recipe in enumerate(serializer.data):
             recipe_obj = recipes[i]
-            
-            # Add category info
-            try:
-                category_id = recipe_obj.identified_by_set.first().ib_c_id
-                category = Category.objects.get(category_id=category_id)
-                recipe['category'] = {
-                    'type': category.r_type,
-                    'region': category.r_region
-                }
-            except (AttributeError, Category.DoesNotExist):
-                recipe['category'] = {
-                    'type': 'Uncategorized',
-                    'region': 'Unknown'
-                }
+            recipe['cat'] = [
+                { 'categoryId' : c.category_id, 'catname': c.cat_name }
+                for c in recipe_obj.category.all()
+            ]
             
             # Add user info (creator)
             try:
-                # Assuming there's a relationship between recipe and user
-                # Modify this based on your actual model relationships
-                creator = recipe_obj.user  # Update this if your relationship field has a different name
+                creator = recipe_obj.user  
                 recipe['user'] = {
                     'userId': creator.id,
                     'username': creator.username,
@@ -332,7 +302,7 @@ class CreateRecipeView(APIView):
                     )
                 
                 # Create recipe_ingredients entry
-                recipe_ingredient = RecipeIngredient(
+                recipe_ingredient = RecipeIngredients(
                     recipe=recipe,
                     ingredient=ingredient,
                     quantity=quantity,
@@ -373,28 +343,18 @@ class RecipeDetailView(APIView):
         except Recipe.DoesNotExist:
             return Response({'message': 'Recipe not found'}, status=status.HTTP_404_NOT_FOUND)
         
-        serializer = RecipeSerializer(recipe)
+        serializer = RecipeDetailSerializer(recipe)
         data = serializer.data
         
         # Add category info
-        try:
-            category_id = recipe.identified_by_set.first().ib_c_id
-            category = Category.objects.get(category_id=category_id)
-            data['category'] = {
-                'categoryId': category.category_id,
-                'type': category.r_type,
-                'region': category.r_region
-            }
-        except (AttributeError, Category.DoesNotExist):
-            data['category'] = {
-                'categoryId': None,
-                'type': 'Uncategorized',
-                'region': 'Unknown'
-            }
+        data['cat'] = [
+            { 'categoryId': c.category_id, 'catname': c.cat_name}
+            for c in recipe.category.all()
+        ]
         
         # Add user info (creator)
         try:
-            creator = recipe.user  # Update this if your relationship field has a different name
+            creator = recipe.user  
             data['user'] = {
                 'userId': creator.id,
                 'username': creator.username,
@@ -410,7 +370,7 @@ class RecipeDetailView(APIView):
             }
         
         # Add ingredients
-        recipe_ingredients = RecipeIngredient.objects.filter(recipe_id=recipe_id)
+        recipe_ingredients = RecipeIngredients.objects.filter(recipe_id=recipe_id)
         data['recipeIngredients'] = []
         
         for recipe_ingredient in recipe_ingredients:
@@ -566,22 +526,28 @@ class ReviewView(generics.ListCreateAPIView):
 #--------------CATEGORY VIEWS---------------#
 class CategoryDetailView(APIView):
     def get(self, request, category_id):
-        try:
-            category = Category.objects.get(category_id=category_id)
-        except Category.DoesNotExist:
-            return Response({'message': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
+        # try:
+        #     category = Category.objects.get(category_id=category_id)
+        # except Category.DoesNotExist:
+        #     return Response({'message': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
         
-        serializer = CategorySerializer(category)
-        data = serializer.data
+        # serializer = CategorySerializer(category)
+        # data = serializer.data
         
-        # Get recipes in this category
-        recipe_ids = IdentifiedBy.objects.filter(ib_c_id=category_id).values_list('ib_r_id', flat=True)
-        recipes = Recipe.objects.filter(recipe_id__in=recipe_ids)
+        # # Get recipes in this category
+        # recipes = category.recipes.all()
         
-        recipe_serializer = RecipeSerializer(recipes, many=True)
-        data['recipes'] = recipe_serializer.data
-        
-        return Response(data)
+        # recipe_serializer = RecipeListSerializer(recipes, many=True)
+        # data['recipes'] = recipe_serializer.data
+        cat = get_object_or_404(Category, category_id=category_id)
+
+        base = CategorySerializer(cat).data
+
+        queryset = cat.recipes.all()
+        recipes = RecipeListSerializer(queryset, many=True).data
+
+        base['recipes'] = recipes
+        return Response(base)
 
 #--------------SEARCH ENDPOINT---------------#
 class SearchRecipesView(APIView):
@@ -594,5 +560,5 @@ class SearchRecipesView(APIView):
         # Search in recipe names and descriptions
         recipes = Recipe.objects.filter(recipe_name__icontains=search) | Recipe.objects.filter(recipe_description__icontains=search)
         
-        serializer = RecipeSerializer(recipes, many=True)
+        serializer = RecipeListSerializer(recipes, many=True)
         return Response(serializer.data)

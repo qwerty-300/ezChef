@@ -48,15 +48,16 @@ const RecipeDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
-  const [showFullInstructions, setShowFullInstructions] = useState(false);
+  // const [showFullInstructions, setShowFullInstructions] = useState(false);
   
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
         setLoading(true);
         
-        // Replace with actual API call when backend is implemented
-        const response = await fetch(`/api/recipes/${recipeId}`);
+        const response = await fetch(`/api/recipes/${recipeId}/`, {
+          headers: { 'Content-Type': 'application/json'}
+        });
         
         if (!response.ok) {
           throw new Error('Recipe not found');
@@ -67,7 +68,7 @@ const RecipeDetailPage = () => {
         
         // Check if recipe is saved in user's cookbook
         if (currentUser) {
-          const savedResponse = await fetch(`/api/users/${currentUser.userId}/cookbooks/recipes/${recipeId}`);
+          const savedResponse = await fetch(`/api/users/${currentUser.userId}/cookbooks/recipes/${recipeId}/`);
           setIsSaved(savedResponse.ok);
         }
       } catch (err) {
@@ -225,14 +226,6 @@ const RecipeDetailPage = () => {
           >
             Recipes
           </Link>
-          <Link
-            underline="hover"
-            color="inherit"
-            onClick={() => navigate(`/category/${recipe.category.categoryId}`)}
-            sx={{ cursor: "pointer" }}
-          >
-            {recipe.category.type}
-          </Link>
           <Typography color="text.primary">{recipe.name}</Typography>
         </Breadcrumbs>
         
@@ -244,18 +237,15 @@ const RecipeDetailPage = () => {
                 {recipe.name}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
-                <Chip
-                  label={recipe.category.type}
-                  color="primary"
-                  variant="outlined"
-                  size="small"
-                />
-                <Chip
-                  label={recipe.category.region}
-                  color="secondary"
-                  variant="outlined"
-                  size="small"
-                />
+                {recipe.cat.map(c => (
+                  <Chip
+                    key={c.categoryId}
+                    label={c.catname}
+                    color="primary"
+                    variant="outlined"
+                    size="small"
+                  />
+                ))}
                 <Chip
                   label={`Difficulty: ${recipe.difficulty}/5`}
                   color="default"
@@ -307,7 +297,7 @@ const RecipeDetailPage = () => {
           </Grid>
           
           {/* Instructions Section */}
-          <Grid item xs={12} md={8}>
+          {/* <Grid item xs={12} md={8}>
             <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
               <Typography variant="h6" gutterBottom>
                 Instructions
@@ -329,7 +319,7 @@ const RecipeDetailPage = () => {
                 </Button>
               )}
             </Paper>
-          </Grid>
+          </Grid>*/}
         </Grid>
         
         {/* Reviews Section */}
