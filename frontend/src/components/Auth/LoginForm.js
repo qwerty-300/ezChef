@@ -13,6 +13,12 @@ import {
 } from "@mui/material";
 import { useAuth } from "../Auth/AuthContext";
 
+// helper to read the CSRF cookie
+function getCookie(name) {
+  const match = document.cookie.match(new RegExp('(^|; )' + name + '=([^;]*)'));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+
 const LoginForm = () => {
   const [formData, setFormData] = useState({
     username: "",
@@ -38,10 +44,15 @@ const LoginForm = () => {
     setLoading(true);
 
     try {
+      // Read CSRF token cookie
+      const csrftoken = getCookie("csrftoken");
+
       const response = await fetch('/api/auth/login/', {
-        method: 'POST',
+        method: "POST",
+        credentials: "include",            
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken,      
         },
         body: JSON.stringify(formData),
       });

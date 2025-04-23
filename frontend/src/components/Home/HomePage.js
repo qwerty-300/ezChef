@@ -125,9 +125,9 @@ const HomePage = () => {
             {recipe.name}
           </Typography>
           <Typography variant="body2" color="text.secondary" component="div">
-            {recipe.description.length > 60 
+            {recipe.description?.length > 60 
               ? `${recipe.description.substring(0, 60)}...` 
-              : recipe.description}
+              : (recipe.description ?? "No description available")}
           </Typography>
           <Typography variant="caption" color="text.secondary" component="div" sx={{ mt: 1 }}>
             {new Date(recipe.dateAdded).toLocaleDateString()}
