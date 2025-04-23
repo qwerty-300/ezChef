@@ -20,11 +20,11 @@ urlpatterns = [
     path('categories/<int:category_id>/recipes/', views.RecipeListView.as_view(), name='category_recipes'),
     
     # Review endpoints
-    path('reviews/', views.ReviewListCreateView.as_view(), name='review_list'),
-    path('recipes/<int:recipe_id>/reviews/', views.ReviewListCreateView.as_view(), name='recipe_reviews'),
+    # path('reviews/', views.ReviewListCreateView.as_view(), name='review_list'),
+    # path('recipes/<int:recipe_id>/reviews/', views.ReviewListCreateView.as_view(), name='recipe_reviews'),
     
     # Cookbook endpoints
-    path('users/<int:user_id>/cookbooks/', views.UserCookbooksView.as_view(), name='user_cookbooks'),
+    # path('users/<int:user_id>/cookbooks/', views.UserCookbooksView.as_view(), name='user_cookbooks'),
     
     # Other model endpoints (can keep if useful)
     path('users/', views.UserView.as_view()),

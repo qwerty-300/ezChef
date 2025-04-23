@@ -96,13 +96,13 @@ class RecipeDetailSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ['recipe_id', 'recipe_name', 'recipe_description', 'date_added', 'recipe_difficulty']
 
-class RecipeIngredientSerializer(serializers.ModelSerializer):
+class RecipeIngredientsSerializer(serializers.ModelSerializer):
     ingredient_name = serializers.ReadOnlyField(source='ingredient.ingredient_name')
     quantity_amount = serializers.ReadOnlyField(source='quantity.quantity_amount')
     unit_name = serializers.ReadOnlyField(source='unit.unit_name', default='')
     
     class Meta:
-        model = RecipeIngredient
+        model = RecipeIngredients
         fields = ['recipe', 'ingredient', 'ingredient_name', 'quantity', 'quantity_amount', 'unit', 'unit_name']
 
 class ReviewSerializer(serializers.ModelSerializer):

@@ -1,10 +1,10 @@
 from django.shortcuts import render
-from rest_framework import generics, status
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth.hashers import make_password, check_password
-from .serializers import CategorySerializer, IngredientSerializer, NutritionSerializer, QuantitySerializer, RecipeIngredientSerializer, UnitSerializer, UserSerializer, RecipeSerializer, ReviewSerializer, CookbookSerializer
-from .models import User, Recipe, Review, Category, RecipeIngredient, Ingredient, Unit, Quantity, Nutrition, Cookbook, IdentifiedBy
+from .serializers import CategorySerializer, IngredientSerializer, NutritionSerializer, QuantitySerializer, RecipeIngredientsSerializer, UnitSerializer, UserSerializer, RecipeSerializer, ReviewSerializer, CookbookSerializer, AddRecipeSerializer
+from .models import User, Recipe, Review, Category, RecipeIngredients, Ingredient, Unit, Quantity, Nutrition, Cookbook, IdentifiedBy
 
 #--------------AUTHENTICATION VIEWS---------------#
 class RegisterView(APIView):
@@ -155,8 +155,8 @@ class CategoryView(generics.ListAPIView):
     serializer_class = CategorySerializer
 
 class RecipeIngredientsView(generics.ListAPIView):
-    queryset = RecipeIngredient.objects.all()
-    serializer_class = RecipeIngredientSerializer
+    queryset = RecipeIngredients.objects.all()
+    serializer_class = RecipeIngredientsSerializer
 
 class IngredientView(generics.ListAPIView):
     queryset = Ingredient.objects.all()
