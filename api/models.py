@@ -27,76 +27,6 @@ class Admin(models.Model):
     class Meta:
         db_table = 'admin'
 
-
-# class AuthGroup(models.Model):
-#     name = models.CharField(unique=True, max_length=150)
-
-#     class Meta:
-#         managed = False
-#         db_table = 'auth_group'
-
-
-# class AuthGroupPermissions(models.Model):
-#     id = models.BigAutoField(primary_key=True)
-#     group = models.ForeignKey(AuthGroup, models.DO_NOTHING)
-#     permission = models.ForeignKey('AuthPermission', models.DO_NOTHING)
-
-#     class Meta:
-#         managed = False
-#         db_table = 'auth_group_permissions'
-#         unique_together = (('group', 'permission'),)
-
-
-# class AuthPermission(models.Model):
-#     name = models.CharField(max_length=255)
-#     content_type = models.ForeignKey('DjangoContentType', models.DO_NOTHING)
-#     codename = models.CharField(max_length=100)
-
-#     class Meta:
-#         managed = False
-#         db_table = 'auth_permission'
-#         unique_together = (('content_type', 'codename'),)
-
-
-# class AuthUser(models.Model):
-#     password = models.CharField(max_length=128)
-#     last_login = models.DateTimeField(blank=True, null=True)
-#     is_superuser = models.IntegerField()
-#     username = models.CharField(unique=True, max_length=150)
-#     first_name = models.CharField(max_length=150)
-#     last_name = models.CharField(max_length=150)
-#     email = models.CharField(max_length=254)
-#     is_staff = models.IntegerField()
-#     is_active = models.IntegerField()
-#     date_joined = models.DateTimeField()
-
-#     class Meta:
-#         managed = False
-#         db_table = 'auth_user'
-
-
-# class AuthUserGroups(models.Model):
-#     id = models.BigAutoField(primary_key=True)
-#     user = models.ForeignKey(AuthUser, models.DO_NOTHING)
-#     group = models.ForeignKey(AuthGroup, models.DO_NOTHING)
-
-#     class Meta:
-#         managed = False
-#         db_table = 'auth_user_groups'
-#         unique_together = (('user', 'group'),)
-
-
-# class AuthUserUserPermissions(models.Model):
-#     id = models.BigAutoField(primary_key=True)
-#     user = models.ForeignKey(AuthUser, models.DO_NOTHING)
-#     permission = models.ForeignKey(AuthPermission, models.DO_NOTHING)
-
-#     class Meta:
-#         managed = False
-#         db_table = 'auth_user_user_permissions'
-#         unique_together = (('user', 'permission'),)
-
-
 #---------------CATEGORY TABLE---------------#
 class Category(models.Model):
     category_id = models.AutoField(primary_key=True)
@@ -116,7 +46,6 @@ class Category(models.Model):
             return self.r_type
         return f"Category {self.category_id}"
 
-    
 #---------------CLIENT TABLE---------------#
 class Client(models.Model):
     user = models.ForeignKey('User', models.DO_NOTHING, blank=True, null=True)
@@ -125,35 +54,38 @@ class Client(models.Model):
         managed=False
         db_table = 'client'
 
-
 #---------------COOKBOOK TABLE---------------#
 class Cookbook(models.Model):
     cb_id = models.AutoField(primary_key=True)
     cb_title = models.CharField(max_length=30)
     cb_description = models.TextField(blank=True, null=True)
+    creator = models.ForeignKey('User', db_column='creator_id', on_delete=models.DO_NOTHING, related_name='created_cookbooks')
+    subscribers = models.ManyToManyField('User', through='SubscribedCookbook', related_name='subscribed_cookbooks')
 
     class Meta:
         managed = False
         db_table = 'cookbook'
 
+#---------------SUBSCRIBED_COOKBOOK TABLE---------------#
+class SubscribedCookbook(models.Model):
+    user = models.ForeignKey('User', db_column='user_id', on_delete=models.CASCADE)
+    cookbook = models.ForeignKey('Cookbook', db_column='cb_id', on_delete=models.CASCADE)
+
+    class Meta:
+        managed = False
+        db_table = 'subscribed_cookbook'
+        unique_together = (('user', 'cookbook'),)
 
 #---------------IDENTIFIED_BY TABLE---------------#
 class IdentifiedBy(models.Model):
     id = models.AutoField(primary_key=True)
-
-    # Identifies a recipe via type and/or region
-    recipe = models.ForeignKey(
-        'Recipe', db_column='ib_r_id', on_delete=models.CASCADE, 
-    )
-    category = models.ForeignKey(
-        'Category', db_column='ib_c_id', on_delete=models.CASCADE, 
-    )
+    recipe = models.ForeignKey('Recipe', db_column='ib_r_id', on_delete=models.CASCADE)
+    category = models.ForeignKey('Category', db_column='ib_c_id', on_delete=models.CASCADE)
 
     class Meta:
         managed=False
         db_table = 'identified_by'
         unique_together = (('recipe', 'category'),) 
-
 
 #---------------INGREDIENT TABLE---------------#
 class Ingredient(models.Model):
@@ -167,7 +99,6 @@ class Ingredient(models.Model):
     def __str__(self):
         return self.ingredient_name
 
-    
 #---------------NUTRITION TABLE---------------#
 class Nutrition(models.Model):
     nutrition_id = models.AutoField(primary_key=True)
@@ -181,7 +112,6 @@ class Nutrition(models.Model):
         managed=False
         db_table = 'nutrition'
 
-
 #---------------QUANTITY TABLE---------------#
 class Quantity(models.Model):
     quantity_id = models.IntegerField(primary_key=True)
@@ -194,7 +124,6 @@ class Quantity(models.Model):
     def __str__(self):
         return str(self.quantity_amount)
 
-    
 #---------------RECIPE TABLE---------------#
 class Recipe(models.Model):
     recipe_id = models.AutoField(primary_key=True)
@@ -204,7 +133,6 @@ class Recipe(models.Model):
     recipe_difficulty = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
-
 
     category = models.ManyToManyField(
         'Category',
@@ -219,7 +147,6 @@ class Recipe(models.Model):
     def __str__(self):
         return self.recipe_name
 
-
 #---------------RECIPE_INGREDIENTS TABLE---------------#
 class RecipeIngredients(models.Model):
     id = models.AutoField(primary_key=True)
@@ -232,8 +159,6 @@ class RecipeIngredients(models.Model):
         managed=False
         db_table = 'recipe_ingredients'
         unique_together = (('recipe', 'ingredient', 'quantity'),)
-    
-
 
 #---------------UNIT TABLE---------------#
 class Unit(models.Model):
@@ -247,7 +172,6 @@ class Unit(models.Model):
     
     def __str__(self):
         return str(self.unit_name)
-    
 
 #---------------USER TABLE---------------#
 class User(models.Model):
@@ -265,12 +189,11 @@ class User(models.Model):
     def __str__(self):
         return self.username
 
-
 #---------------REVIEW TABLE---------------#
 class Review(models.Model):
-    review = models.ForeignKey('User', models.DO_NOTHING)
-    user_id = models.IntegerField()
-    recipe = models.ForeignKey('Recipe', models.DO_NOTHING)
+    user = models.ForeignKey('User', on_delete=models.DO_NOTHING)
+    recipe = models.ForeignKey('Recipe', on_delete=models.DO_NOTHING, null=True, blank=True)
+    cookbook = models.ForeignKey('Cookbook', on_delete=models.DO_NOTHING, null=True, blank=True)
     rating = models.PositiveIntegerField()
     comment = models.TextField(blank=True, null=True)
     date_created = models.DateTimeField(blank=True, null=True)
@@ -278,4 +201,5 @@ class Review(models.Model):
     class Meta:
         managed=False
         db_table = 'review'
-        unique_together = (('user_id', 'recipe'),)
+        unique_together = (('user', 'recipe'), ('user', 'cookbook'))
+

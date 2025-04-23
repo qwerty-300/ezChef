@@ -11,10 +11,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.DeleteModel(
-            name='Includes',
-        ),
-        migrations.AlterModelOptions(
+
+	migrations.AlterModelOptions(
             name='addrecipe',
             options={'managed': False},
         ),
@@ -71,4 +69,5 @@ class Migration(migrations.Migration):
             name='admin',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='api.user'),
         ),
+
     ]
