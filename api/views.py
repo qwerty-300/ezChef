@@ -6,8 +6,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from .serializers import CategorySerializer, IngredientSerializer, NutritionSerializer, QuantitySerializer, RecipeIngredientSerializer, UnitSerializer, UserSerializer, RecipeSerializer, ReviewSerializer, CookbookSerializer
 from .models import User, Recipe, Review, Category, RecipeIngredient, Ingredient, Unit, Quantity, Nutrition, Cookbook, IdentifiedBy
 
-# Authentication Related Views
-
+#--------------AUTHENTICATION VIEWS---------------#
 class RegisterView(APIView):
     def post(self, request):
         username = request.data.get('username')
@@ -175,7 +174,7 @@ class NutritionView(generics.ListAPIView):
     queryset = Nutrition.objects.all()
     serializer_class = NutritionSerializer
 
-# Recipe-related Views
+#--------------RECIPE VIEWS---------------#
 class RecipeListView(APIView):
     def get(self, request):
         """
@@ -502,36 +501,69 @@ class RecipeDetailView(APIView):
         recipe.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+# ---------------COOKBOOK VIEWS---------------#
+class CookbookListView(generics.ListAPIView):
+    queryset = Cookbook.objects.all()
+    serializer_class = CookbookSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-# Review-related Views
-class ReviewListCreateView(APIView):
-    def get(self, request, recipe_id=None):
-        if recipe_id:
-            reviews = Review.objects.filter(recipe_id=recipe_id)
-        else:
-            reviews = Review.objects.all()
-        
-        serializer = ReviewSerializer(reviews, many=True)
-        return Response(serializer.data)
-    
-    def post(self, request):
-        serializer = ReviewSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class CookbookDetailView(generics.RetrieveUpdateAPIView):
+    queryset = Cookbook.objects.all()
+    serializer_class = CookbookSerializer
+    lookup_field = 'cb_id'
+    permission_classes = [permissions.IsAuthenticated]
+
+    def update(self, request, *args, **kwargs):
+        cookbook = self.get_object()
+        if cookbook.creator != request.user:
+            return Response({'detail': 'You do not have permission to edit this cookbook.'},
+                            status=status.HTTP_403_FORBIDDEN)
+        return super().update(request, *args, **kwargs)
+
+class CookbookEntryListCreateView(generics.ListCreateAPIView):
+    serializer_class = AddRecipeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return AddRecipe.objects.filter(cb=self.kwargs['cb_id'], user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user, cb_id=self.kwargs['cb_id'])
+
+# ---------------REVIEW VIEW---------------#
+class ReviewView(generics.ListCreateAPIView):
+    serializer_class = ReviewSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Review.objects.filter(user_id=self.request.user.id)
+
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        data = request.data
+
+        recipe = data.get("recipe")
+        cookbook = data.get("cookbook")
+
+        existing_review = None
+        if recipe:
+            existing_review = Review.objects.filter(user_id=user.id, recipe_id=recipe).first()
+        elif cookbook:
+            existing_review = Review.objects.filter(user_id=user.id, cookbook_id=cookbook).first()
+
+        if existing_review:
+            serializer = self.get_serializer(existing_review, data=data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data)
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user_id=user.id)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-# Cookbook-related Views
-class UserCookbooksView(APIView):
-    def get(self, request, user_id):
-        # Get all cookbooks for a specific user
-        cookbooks = Cookbook.objects.filter(user_id=user_id)
-        serializer = CookbookSerializer(cookbooks, many=True)
-        return Response(serializer.data)
-
-
-# CategoryDetailView
+#--------------CATEGORY VIEWS---------------#
 class CategoryDetailView(APIView):
     def get(self, request, category_id):
         try:
@@ -551,8 +583,7 @@ class CategoryDetailView(APIView):
         
         return Response(data)
 
-
-# Search endpoint
+#--------------SEARCH ENDPOINT---------------#
 class SearchRecipesView(APIView):
     def get(self, request):
         search = request.query_params.get('q', '')

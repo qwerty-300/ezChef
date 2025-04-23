@@ -1,21 +1,80 @@
 from rest_framework import serializers
-from .models import Recipe, Category, Ingredient, Unit, Quantity, RecipeIngredient, Nutrition, Review, User, Cookbook
+from rest_framework.validators import UniqueTogetherValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth.hashers import make_password
+from .models import User, Recipe, Review, Category, RecipeIngredients, Ingredient, Unit, Quantity, Nutrition, Cookbook, AddRecipe, SubscribedCookbook
 
+
+#---------------USER SERIALIZER---------------#
 class UserSerializer(serializers.ModelSerializer):
+    # Password should be write-only
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'f_name', 'l_name', 'email']
+        fields = ('id', 'username', 'password', 'f_name', 'l_name', 'date_of_birth', 'email')
 
+    def create(self, validated_data):
+        # Hashes the password before saving it
+        validated_data['password'] = make_password(validated_data['password'])
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        # If the user wants to change the password, hash it again
+        pwd = validated_data.pop('password', None)
+        user = super().update(instance, validated_data)
+        if pwd:
+            user.set_password(pwd)
+            user.save()
+        return user
+
+#---------------CATEGORY SERIALIZER---------------#
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['category_id', 'r_type', 'r_region']
+        fields = ('category_id', 'r_type', 'r_region')
 
+#---------------RECIPE SERIALIZER---------------#
+class RecipeSerializer(serializers.ModelSerializer):
+    # Read-only
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), many=True
+    )
+    recipe_difficulty = serializers.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    date_added = serializers.DateField()
+
+    class Meta:
+        model = Recipe
+        fields = ('recipe_id', 'recipe_name', 'recipe_description', 'date_added', 'recipe_difficulty', 'category')
+    
+    def create(self, validated_data):
+        cat = validated_data.pop('category', [])
+        recipe = super().create(validated_data)
+        recipe.category.set(cat)
+        return recipe
+    
+    def update(self, instance, validated_data):
+        cat = validated_data.pop('category', None)
+        recipe = super().update(instance, validated_data)
+        if cat is not None:
+            recipe.category.set(cat)
+        return recipe
+
+#---------------RECIPE_INGREDIENTS SERIALIZER---------------#
+class RecipeIngredientsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RecipeIngredients
+        fields = ('recipe_id', 'ingredient_id', 'quantity_id', 'unit_id')
+
+#---------------INGREDIENT SERIALIZER---------------#
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = ['ingredient_id', 'ingredient_name']
 
+#---------------UNIT SERIALIZER---------------#
 class UnitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Unit
@@ -54,12 +113,63 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = ['review_id', 'user', 'username', 'recipe', 'recipe_name', 'rating', 'comment', 'date_created']
 
+#---------------QUANTITY SERIALIZER---------------#
 class QuantitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Quantity
         fields = ['quantity_id', 'quantity_amount']
 
+#---------------NUTRITION SERIALIZER---------------#
+class NutritionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Nutrition
+        fields = ('nutrition_id', 'protein_count', 'calorie_count', 'ingredient', 'unit', 'serving_size')
+
+#---------------COOKBOOK SERIALIZER---------------#
 class CookbookSerializer(serializers.ModelSerializer):
+    creator = UserSerializer(read_only=True)
+    subscribers = UserSerializer(many=True, read_only=True)
+
     class Meta:
         model = Cookbook
-        fields = ['cb_id', 'cb_title', 'cb_description', 'num_of_saves']
+        fields = ('cb_id', 'cb_title', 'cb_description', 'creator', 'subscribers')
+
+#---------------SUBSCRIBED COOKBOOK SERIALIZER---------------#
+class SubscribedCookbookSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubscribedCookbook
+        fields = '__all__'
+
+#---------------ADD_RECIPE SERIALIZER---------------#    
+class AddRecipeSerializer(serializers.ModelSerializer):
+    recipe = serializers.PrimaryKeyRelatedField(
+        queryset = Recipe.objects.all()
+    )
+
+    class Meta:
+        model = AddRecipe
+        fields = ('id', 'recipe')
+        read_only_fields = ('id',)
+
+#---------------REVIEW SERIALIZER---------------#
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ('user', 'recipe', 'cookbook', 'rating', 'comment', 'date_created')
+
+    def validate(self, data):
+        user = data.get('user')
+        recipe = data.get('recipe')
+        cookbook = data.get('cookbook')
+
+        if recipe and cookbook:
+            raise serializers.ValidationError("Review cannot be linked to both a recipe and a cookbook.")
+        if not recipe and not cookbook:
+            raise serializers.ValidationError("Review must be linked to either a recipe or a cookbook.")
+
+        if recipe and Review.objects.filter(user=user, recipe=recipe).exists():
+            raise serializers.ValidationError("User has already reviewed this recipe.")
+        if cookbook and Review.objects.filter(user=user, cookbook=cookbook).exists():
+            raise serializers.ValidationError("User has already reviewed this cookbook.")
+
+        return data
