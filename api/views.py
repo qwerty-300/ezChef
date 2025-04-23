@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,7 +8,7 @@ from .models import User, Recipe, Review, Category, RecipeIngredients, Ingredien
 
 #--------------AUTHENTICATION VIEWS---------------#
 class RegisterView(APIView):
-    def post(self, request):
+    def post(self, request, category_id):
         username = request.data.get('username')
         email = request.data.get('email')
         password = request.data.get('password')
@@ -142,10 +142,6 @@ class UserView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-# class RecipeView(generics.CreateAPIView):
-#     queryset = Recipe.objects.all()
-#     serializer_class = RecipeSerializer
-
 class ReviewView(generics.ListAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
@@ -184,8 +180,7 @@ class RecipeListView(APIView):
         sort = request.query_params.get('sort', 'newest')
         limit = request.query_params.get('limit', None)
         search = request.query_params.get('search', None)
-        category_type = request.query_params.get('type', None)
-        region = request.query_params.get('region', None)
+        cat = request.query_params.get('cat_name', None)
         difficulty = request.query_params.get('difficulty', None)
         
         # Start with all recipes
@@ -196,18 +191,8 @@ class RecipeListView(APIView):
             recipes = recipes.filter(recipe_name__icontains=search) | recipes.filter(recipe_description__icontains=search)
         
         # Apply category filters
-        if category_type or region:
-            # Get IDs of recipes with matching category
-            matching_categories = Category.objects.all()
-            if category_type:
-                matching_categories = matching_categories.filter(r_type=category_type)
-            if region:
-                matching_categories = matching_categories.filter(r_region=region)
-            
-            # Filter recipes by these categories
-            from django.db.models import Q
-            category_ids = matching_categories.values_list('category_id', flat=True)
-            recipes = recipes.filter(Q(identified_by__ib_c_id__in=category_ids))
+        if cat:
+            recipes = recipes.filter(category__cat_name___iexact=cat)
         
         # Apply difficulty filter
         if difficulty:
@@ -229,20 +214,10 @@ class RecipeListView(APIView):
         # Add category and user data to each recipe
         for i, recipe in enumerate(serializer.data):
             recipe_obj = recipes[i]
-            
-            # Add category info
-            # try:
-            #     category_id = recipe_obj.identified_by_set.first().ib_c_id
-            #     category = Category.objects.get(category_id=category_id)
-            #     recipe['category'] = {
-            #         'type': category.r_type,
-            #         'region': category.r_region
-            #     }
-            # except (AttributeError, Category.DoesNotExist):
-            #     recipe['category'] = {
-            #         'type': 'Uncategorized',
-            #         'region': 'Unknown'
-            #     }
+            recipe['cat'] = [
+                { 'categoryId' : c.category_id, 'catname': c.cat_name }
+                for c in recipe_obj.category.all()
+            ]
             
             # Add user info (creator)
             try:
@@ -377,20 +352,10 @@ class RecipeDetailView(APIView):
         data = serializer.data
         
         # Add category info
-        try:
-            category_id = recipe.identified_by_set.first().ib_c_id
-            category = Category.objects.get(category_id=category_id)
-            data['category'] = {
-                'categoryId': category.category_id,
-                'type': category.r_type,
-                'region': category.r_region
-            }
-        except (AttributeError, Category.DoesNotExist):
-            data['category'] = {
-                'categoryId': None,
-                'type': 'Uncategorized',
-                'region': 'Unknown'
-            }
+        data['cat'] = [
+            { 'categoryId': c.category_id, 'catname': c.cat_name}
+            for c in recipe.category.all()
+        ]
         
         # Add user info (creator)
         try:
@@ -566,22 +531,28 @@ class ReviewView(generics.ListCreateAPIView):
 #--------------CATEGORY VIEWS---------------#
 class CategoryDetailView(APIView):
     def get(self, request, category_id):
-        try:
-            category = Category.objects.get(category_id=category_id)
-        except Category.DoesNotExist:
-            return Response({'message': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
+        # try:
+        #     category = Category.objects.get(category_id=category_id)
+        # except Category.DoesNotExist:
+        #     return Response({'message': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
         
-        serializer = CategorySerializer(category)
-        data = serializer.data
+        # serializer = CategorySerializer(category)
+        # data = serializer.data
         
-        # Get recipes in this category
-        recipe_ids = IdentifiedBy.objects.filter(ib_c_id=category_id).values_list('ib_r_id', flat=True)
-        recipes = Recipe.objects.filter(recipe_id__in=recipe_ids)
+        # # Get recipes in this category
+        # recipes = category.recipes.all()
         
-        recipe_serializer = RecipeSerializer(recipes, many=True)
-        data['recipes'] = recipe_serializer.data
-        
-        return Response(data)
+        # recipe_serializer = RecipeListSerializer(recipes, many=True)
+        # data['recipes'] = recipe_serializer.data
+        cat = get_object_or_404(Category, category_id=category_id)
+
+        base = CategorySerializer(cat).data
+
+        queryset = cat.recipes.all()
+        recipes = RecipeListSerializer(queryset, many=True).data
+
+        base['recipes'] = recipes
+        return Response(base)
 
 #--------------SEARCH ENDPOINT---------------#
 class SearchRecipesView(APIView):

@@ -35,23 +35,6 @@ import {
 } from "@mui/icons-material";
 import { useAuth } from "../Auth/AuthContext";
 
-// These could come from an API call
-const REGIONS = [
-  "American", "Italian", "Mexican", "Chinese", "Japanese", 
-  "Indian", "French", "Thai", "Mediterranean", "Middle Eastern"
-];
-
-const TYPES = [
-  "Breakfast", "Lunch", "Dinner", "Appetizer", "Soup", 
-  "Salad", "Main Course", "Side Dish", "Dessert", "Snack", "Beverage"
-];
-
-const UNITS = [
-  "cup", "tablespoon", "teaspoon", "ounce", "pound", 
-  "gram", "kilogram", "milliliter", "liter", "pinch", 
-  "slice", "piece", "whole"
-];
-
 const CreateRecipePage = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
@@ -63,8 +46,7 @@ const CreateRecipePage = () => {
     name: "",
     description: "",
     difficulty: 3,
-    categoryType: "",
-    categoryRegion: "",
+    catname: "",
     instructions: "",
     ingredients: []
   });
@@ -138,8 +120,7 @@ const CreateRecipePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.description || !formData.categoryType || 
-        !formData.categoryRegion || !formData.instructions || formData.ingredients.length === 0) {
+    if (!formData.name || !formData.description || !formData.catname || !formData.instructions || formData.ingredients.length === 0) {
       setError("Please fill in all required fields and add at least one ingredient");
       return;
     }
@@ -152,12 +133,9 @@ const CreateRecipePage = () => {
         name: formData.name,
         description: formData.description,
         difficulty: formData.difficulty,
-        userId: currentUser.userId,
+        id: currentUser.userId,
         dateAdded: new Date().toISOString(),
-        category: {
-          type: formData.categoryType,
-          region: formData.categoryRegion
-        },
+        category: formData.catname,
         instructions: formData.instructions,
         ingredients: formData.ingredients.map(ing => ({
           ingredient: {
@@ -292,32 +270,14 @@ const CreateRecipePage = () => {
                 <FormControl fullWidth required>
                   <InputLabel>Category Type</InputLabel>
                   <Select
-                    name="categoryType"
-                    value={formData.categoryType}
+                    name="catname"
+                    value={formData.catname}
                     onChange={handleChange}
                     disabled={loading}
                   >
                     {TYPES.map((type) => (
                       <MenuItem key={type} value={type}>
                         {type}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>Region</InputLabel>
-                  <Select
-                    name="categoryRegion"
-                    value={formData.categoryRegion}
-                    onChange={handleChange}
-                    disabled={loading}
-                  >
-                    {REGIONS.map((region) => (
-                      <MenuItem key={region} value={region}>
-                        {region}
                       </MenuItem>
                     ))}
                   </Select>

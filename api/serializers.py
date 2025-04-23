@@ -31,27 +31,19 @@ class UserSerializer(serializers.ModelSerializer):
 #---------------CATEGORY SERIALIZER---------------#
 class CategorySerializer(serializers.ModelSerializer):
     categoryId = serializers.IntegerField(source='category_id')
-    rtype = serializers.CharField(source="r_type")
-    region = serializers.CharField(source="r_region")
+    catname = serializers.CharField(source='cat_name')
     class Meta:
         model = Category
-        fields = ('categoryId', 'rtype', 'region')
+        fields = ('categoryId', 'catname')
 
 #---------------RECIPE SERIALIZER---------------#
 class RecipeListSerializer(serializers.ModelSerializer):
-    # category = serializers.PrimaryKeyRelatedField(
-    #     queryset=Category.objects.all(), many=True
-    # )
-    # recipe_difficulty = serializers.IntegerField(
-    #     validators=[MinValueValidator(1), MaxValueValidator(5)]
-    # )
-    # date_added = serializers.DateField()
     recipeId = serializers.IntegerField(source='recipe_id')
     name = serializers.CharField(source='recipe_name')
     description = serializers.CharField(source='recipe_description')
     dateAdded = serializers.DateField(source='date_added')
     difficulty  = serializers.IntegerField(source='recipe_difficulty')
-    category    = CategorySerializer(many=True)
+    category    = CategorySerializer(source='identifiedby_set__category', many=True, read_only=True)
 
     class Meta:
         model = Recipe

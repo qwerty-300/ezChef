@@ -45,8 +45,7 @@ import {
             // Map to real fields
             const cats = data.map(cat => ({
               id: cat.categoryId,
-              type: cat.rtype || 'Uncategorized',
-              region: cat.region || 'Unknown',
+              name: cat.catname
             }));
     
             console.log('Mapped categories:', cats);
@@ -64,19 +63,16 @@ import {
   
     const handleCategoryClick = (categoryId) => {
       // Navigate to category detail page
-      navigate(`/category/${categoryId}/`);
+      navigate(`/categories/${categoryId}`);
     };
   
     const handleSearch = (e) => {
       setSearchQuery(e.target.value);
     };
   
-    const filteredCategories = categories.filter((category) => {
-      const q = searchQuery.toLowerCase();
-      const type = (category.type || '').toLowerCase();
-      const reg = (category.region || '').toLowerCase();
-      return type.includes(q) || reg.includes(q);
-    });
+    const filteredCategories = categories.filter(cat => 
+      cat.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   
     return (
       <Box sx={{ flexGrow: 1, minHeight: "100vh", bgcolor: "#f9fafb" }}>
@@ -175,36 +171,10 @@ import {
                       },
                     }}
                   >
-                    {/* <CardActionArea onClick={() => handleCategoryClick(category.id)}>
-                      <CardMedia
-                        component="img"
-                        height="140"
-                        image={category.image}
-                        alt={category.name}
-                      />
-                      <CardContent sx={{ flexGrow: 1 }}>
-                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                          <Typography gutterBottom variant="h6" component="div">
-                            {category.name}
-                          </Typography>
-                          <Chip 
-                            label={`${category.recipeCount} recipes`} 
-                            size="small" 
-                            color="primary" 
-                            variant="outlined" 
-                          />
-                        </Box>
-                        <Typography variant="body2" color="text.secondary">
-                          {category.description}
-                        </Typography> */}
-
                     <CardActionArea onClick={() => handleCategoryClick(category.id)}>
                       <CardContent sx={{ flexGrow: 1, textAlign: 'center', py: 4 }}>
                         <Typography gutterBottom variant="h6" component="div">
-                          {category.type}
-                        </Typography>
-                        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
-                          {category.region}
+                          {category.name}
                         </Typography>
                       </CardContent>
                     </CardActionArea>

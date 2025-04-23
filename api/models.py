@@ -23,21 +23,14 @@ class Admin(models.Model):
 #---------------CATEGORY TABLE---------------#
 class Category(models.Model):
     category_id = models.AutoField(primary_key=True)
-    r_type = models.CharField(max_length=100, blank=True, null=True)
-    r_region = models.CharField(max_length=100, blank=True, null=True)
+    cat_name = models.CharField(max_length=50, unique=True)
 
     class Meta:
         managed=False
         db_table = 'category'
     
     def __str__(self):
-        if self.r_type and self.r_region:
-            return f"{self.r_type} ({self.r_region})"
-        if self.r_region:
-            return self.r_region
-        else:
-            return self.r_type
-        return f"Category {self.category_id}"
+        return self.cat_name
 
 #---------------CLIENT TABLE---------------#
 class Client(models.Model):

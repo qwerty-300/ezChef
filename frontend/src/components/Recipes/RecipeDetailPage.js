@@ -227,14 +227,16 @@ const RecipeDetailPage = () => {
           >
             Recipes
           </Link>
+          {/* {recipe.cat.length > 0 && (
           <Link
             underline="hover"
             color="inherit"
-            onClick={() => navigate(`/category/${recipe.category.categoryId}`)}
-            sx={{ cursor: "pointer" }}
+            onClick={() => navigate('/category/${recipe.category.categoryId}')}
+            sx={{ cursor: "pointer"}}
           >
-            {recipe.category.type}
+            {recipe.cat[0].catname}
           </Link>
+          )} */}
           <Typography color="text.primary">{recipe.name}</Typography>
         </Breadcrumbs>
         
@@ -246,18 +248,15 @@ const RecipeDetailPage = () => {
                 {recipe.name}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
-                <Chip
-                  label={recipe.category.type}
-                  color="primary"
-                  variant="outlined"
-                  size="small"
-                />
-                <Chip
-                  label={recipe.category.region}
-                  color="secondary"
-                  variant="outlined"
-                  size="small"
-                />
+                {recipe.cat.map(c => (
+                  <Chip
+                    key={c.categoryId}
+                    label={c.catname}
+                    color="primary"
+                    variant="outlined"
+                    size="small"
+                  />
+                ))}
                 <Chip
                   label={`Difficulty: ${recipe.difficulty}/5`}
                   color="default"

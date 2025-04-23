@@ -38,7 +38,6 @@ import {
 
 const RecipesPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [recipes, setRecipes] = useState([]);
   const [filteredRecipes, setFilteredRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -81,7 +80,6 @@ const RecipesPage = () => {
       try {
         setLoading(true);
         
-        // Replace with actual API call when backend is implemented
         const response = await fetch('/api/recipes');
         
         if (!response.ok) {
@@ -110,8 +108,6 @@ const RecipesPage = () => {
     if (searchQuery) {
       const lowercase = searchQuery.toLowerCase();
       filtered = filtered.filter(recipe => {
-        // recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        // recipe.description.toLowerCase().includes(searchQuery.toLowerCase())
         const nameMatch = recipe.name?.toLowerCase().includes(lowercase);
         const desc = recipe.description ?? "";
         const descMatch = desc.toLowerCase().includes(lowercase);
@@ -121,15 +117,8 @@ const RecipesPage = () => {
     
     // Category filter
     if (categoryFilter) {
-      filtered = filtered.filter(
-        recipe => recipe.category?.type === categoryFilter // Added ?
-      );
-    }
-    
-    // Region filter
-    if (regionFilter) {
-      filtered = filtered.filter(
-        recipe => recipe.category?.region === regionFilter // Added ?
+      filtered = filtered.filter(recipe => 
+          (r.category || []).some(c => c.catname === categoryFilter)
       );
     }
     
@@ -472,18 +461,9 @@ const RecipesPage = () => {
                       </Typography>
                       
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                        <Chip
-                          label={recipe.category.type}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                        />
-                        <Chip
-                          label={recipe.category.region}
-                          size="small"
-                          color="secondary"
-                          variant="outlined"
-                        />
+                          {(recipe.category || []).map((c, i) => (
+                            <Chip key={i} label={c.catname} size="small" variant="outlined" />
+                          ))}
                       </Box>
                       
                       <Divider sx={{ mb: 2 }} />
