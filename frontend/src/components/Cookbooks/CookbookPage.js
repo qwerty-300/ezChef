@@ -61,8 +61,7 @@ const CookbookPage = () => {
       
       try {
         setLoading(true);
-        
-        // Replace with actual API call when backend is implemented
+
         const response = await fetch(`/api/users/${currentUser.userId}/cookbooks`);
         
         if (!response.ok) {

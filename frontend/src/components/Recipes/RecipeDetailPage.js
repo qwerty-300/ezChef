@@ -55,7 +55,6 @@ const RecipeDetailPage = () => {
       try {
         setLoading(true);
         
-        // Replace with actual API call when backend is implemented
         const response = await fetch(`/api/recipes/${recipeId}/`, {
           headers: { 'Content-Type': 'application/json'}
         });

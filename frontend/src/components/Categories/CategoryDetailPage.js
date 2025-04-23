@@ -48,7 +48,6 @@ const CategoryDetailPage = () => {
         setCategory({
           id:          data.categoryId,
           name:        data.catname,
-          // if your API doesn’t send image/description, remove these:
           image:       data.imageUrl,        
           description: data.descriptionText,
         });
@@ -60,7 +59,7 @@ const CategoryDetailPage = () => {
             description: r.description,
             dateAdded:   r.dateAdded,
             difficulty:  r.difficulty,
-            image:       r.imageUrl,    // or remove
+            image:       r.imageUrl,   
           }))
         );
       } catch (err) {

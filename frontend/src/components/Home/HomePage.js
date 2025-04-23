@@ -45,8 +45,7 @@ const HomePage = () => {
     const fetchHomeData = async () => {
       try {
         setLoading(true);
-        
-        // Replace with actual API calls when backend is implemented
+
         const recentResponse = await fetch('/api/recipes?sort=newest&limit=3');
         const popularResponse = await fetch('/api/recipes?sort=popular&limit=3');
         

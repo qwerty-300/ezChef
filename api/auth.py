@@ -9,7 +9,6 @@ class EzChefAuthBackend(BaseBackend):
             # Check if password matches (assuming it's hashed)
             if check_password(password, user.password):
                 return user
-            # If not hashed yet, compare directly (only for development)
             elif user.password == password:
                 return user
         except User.DoesNotExist:

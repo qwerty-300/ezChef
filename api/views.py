@@ -71,8 +71,6 @@ class LoginView(APIView):
             # Password is hashed and matches
             pass
         elif user.password == password:
-            # For non-hashed passwords (development only)
-            # In production, you should ensure all passwords are hashed
             pass
         else:
             return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -203,9 +201,8 @@ class RecipeListView(APIView):
             recipes = recipes.order_by('-date_added')
         elif sort == 'oldest':
             recipes = recipes.order_by('date_added')
-        # You can add more sorting options as needed
         
-        # Apply limit if provided
+        # Apply limit 
         if limit:
             recipes = recipes[:int(limit)]
         
@@ -221,9 +218,7 @@ class RecipeListView(APIView):
             
             # Add user info (creator)
             try:
-                # Assuming there's a relationship between recipe and user
-                # Modify this based on your actual model relationships
-                creator = recipe_obj.user  # Update this if your relationship field has a different name
+                creator = recipe_obj.user  
                 recipe['user'] = {
                     'userId': creator.id,
                     'username': creator.username,
@@ -359,7 +354,7 @@ class RecipeDetailView(APIView):
         
         # Add user info (creator)
         try:
-            creator = recipe.user  # Update this if your relationship field has a different name
+            creator = recipe.user  
             data['user'] = {
                 'userId': creator.id,
                 'username': creator.username,
