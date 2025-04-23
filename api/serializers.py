@@ -30,37 +30,113 @@ class UserSerializer(serializers.ModelSerializer):
 
 #---------------CATEGORY SERIALIZER---------------#
 class CategorySerializer(serializers.ModelSerializer):
+    categoryId = serializers.IntegerField(source='category_id')
+    rtype = serializers.CharField(source="r_type")
+    region = serializers.CharField(source="r_region")
     class Meta:
         model = Category
-        fields = ('category_id', 'r_type', 'r_region')
+        fields = ('categoryId', 'rtype', 'region')
 
 #---------------RECIPE SERIALIZER---------------#
-class RecipeSerializer(serializers.ModelSerializer):
-    # Read-only
-    category = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(), many=True
-    )
-    recipe_difficulty = serializers.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)]
-    )
-    date_added = serializers.DateField()
+class RecipeListSerializer(serializers.ModelSerializer):
+    # category = serializers.PrimaryKeyRelatedField(
+    #     queryset=Category.objects.all(), many=True
+    # )
+    # recipe_difficulty = serializers.IntegerField(
+    #     validators=[MinValueValidator(1), MaxValueValidator(5)]
+    # )
+    # date_added = serializers.DateField()
+    recipeId = serializers.IntegerField(source='recipe_id')
+    name = serializers.CharField(source='recipe_name')
+    description = serializers.CharField(source='recipe_description')
+    dateAdded = serializers.DateField(source='date_added')
+    difficulty  = serializers.IntegerField(source='recipe_difficulty')
+    category    = CategorySerializer(many=True)
 
     class Meta:
         model = Recipe
-        fields = ('recipe_id', 'recipe_name', 'recipe_description', 'date_added', 'recipe_difficulty', 'category')
+        fields = ('recipeId', 'name', 'description', 'dateAdded', 'difficulty', 'category')
     
-    def create(self, validated_data):
-        cat = validated_data.pop('category', [])
-        recipe = super().create(validated_data)
-        recipe.category.set(cat)
-        return recipe
+    # def create(self, validated_data):
+    #     cat = validated_data.pop('category', [])
+    #     recipe = super().create(validated_data)
+    #     recipe.category.set(cat)
+    #     return recipe
     
-    def update(self, instance, validated_data):
-        cat = validated_data.pop('category', None)
-        recipe = super().update(instance, validated_data)
-        if cat is not None:
-            recipe.category.set(cat)
-        return recipe
+    # def update(self, instance, validated_data):
+    #     cat = validated_data.pop('category', None)
+    #     recipe = super().update(instance, validated_data)
+    #     if cat is not None:
+    #         recipe.category.set(cat)
+    #     return recipe
+
+class RecipeDetailSerializer(serializers.ModelSerializer):
+    # reuse the list fields
+    recipeId    = serializers.IntegerField(source="recipe_id")
+    name        = serializers.CharField(source="recipe_name")
+    description = serializers.CharField(source="recipe_description")
+    dateAdded   = serializers.DateField(source="date_added")
+    difficulty  = serializers.IntegerField(source="recipe_difficulty")
+    category    = CategorySerializer(many=True)
+
+    # nested ingredients
+    recipeIngredients = serializers.SerializerMethodField()
+    # nested reviews
+    reviews = serializers.SerializerMethodField()
+    # creator info
+    user    = serializers.SerializerMethodField()
+
+    class Meta:
+        model  = Recipe
+        fields = (
+          "recipeId", "name", "description", "dateAdded", "difficulty",
+          "category", "user", "recipeIngredients", "reviews"
+        )
+
+    def get_recipeIngredients(self, obj):
+        out = []
+        for ri in obj.recipeingredients_set.all():
+            # fetch nutrition if any
+            nutr = Nutrition.objects.filter(ingredient=ri.ingredient).first()
+            out.append({
+              "ingredient":      ri.ingredient.ingredient_name,
+              "amount":          ri.quantity.quantity_amount,
+              "unit":            ri.unit.unit_name if ri.unit else "",
+              "nutrition":       {
+                 "calorieCount": float(nutr.calorie_count or 0),
+                 "proteinCount": float(nutr.protein_count or 0)
+              } if nutr else None
+            })
+        return out
+
+    def get_reviews(self, obj):
+        out = []
+        for rv in obj.review_set.all():
+            out.append({
+              "reviewId": rv.review_id,
+              "rating":   rv.rating,
+              "comment":  rv.comment,
+              "date":     rv.date_created.isoformat(),
+              "user": {
+                "userId":    rv.user.id,
+                "username":  rv.user.username,
+                "firstName": rv.user.f_name,
+                "lastName":  rv.user.l_name
+              }
+            })
+        return out
+
+    def get_user(self, obj):
+        # assumes Recipe has a FK to User called `creator`
+        c = getattr(obj, "creator", None)
+        if not c:
+            return {"userId": None, "username": "Unknown", "firstName": "", "lastName": ""}
+        return {
+          "userId":    c.id,
+          "username":  c.username,
+          "firstName": c.f_name,
+          "lastName":  c.l_name
+        }
 
 #---------------RECIPE_INGREDIENTS SERIALIZER---------------#
 class RecipeIngredientsSerializer(serializers.ModelSerializer):

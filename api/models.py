@@ -184,9 +184,10 @@ class User(models.Model):
 
 #---------------REVIEW TABLE---------------#
 class Review(models.Model):
+    review_id = models.AutoField(primary_key=True, db_column='review_id')
     user = models.ForeignKey('User', on_delete=models.DO_NOTHING)
     recipe = models.ForeignKey('Recipe', on_delete=models.DO_NOTHING, null=True, blank=True)
-    cookbook = models.ForeignKey('Cookbook', on_delete=models.DO_NOTHING, null=True, blank=True)
+    # cookbook = models.ForeignKey('Cookbook', on_delete=models.DO_NOTHING, null=True, blank=True)
     rating = models.PositiveIntegerField()
     comment = models.TextField(blank=True, null=True)
     date_created = models.DateTimeField(blank=True, null=True)
@@ -194,4 +195,4 @@ class Review(models.Model):
     class Meta:
         managed=False
         db_table = 'review'
-        unique_together = (('user', 'recipe'), ('user', 'cookbook'))
+        unique_together = (('user', 'recipe'),) # removed user, cookbook tuple

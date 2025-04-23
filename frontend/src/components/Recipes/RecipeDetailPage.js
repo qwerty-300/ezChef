@@ -48,7 +48,7 @@ const RecipeDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
-  const [showFullInstructions, setShowFullInstructions] = useState(false);
+  // const [showFullInstructions, setShowFullInstructions] = useState(false);
   
   useEffect(() => {
     const fetchRecipe = async () => {
@@ -56,7 +56,9 @@ const RecipeDetailPage = () => {
         setLoading(true);
         
         // Replace with actual API call when backend is implemented
-        const response = await fetch(`/api/recipes/${recipeId}`);
+        const response = await fetch(`/api/recipes/${recipeId}/`, {
+          headers: { 'Content-Type': 'application/json'}
+        });
         
         if (!response.ok) {
           throw new Error('Recipe not found');
@@ -67,7 +69,7 @@ const RecipeDetailPage = () => {
         
         // Check if recipe is saved in user's cookbook
         if (currentUser) {
-          const savedResponse = await fetch(`/api/users/${currentUser.userId}/cookbooks/recipes/${recipeId}`);
+          const savedResponse = await fetch(`/api/users/${currentUser.userId}/cookbooks/recipes/${recipeId}/`);
           setIsSaved(savedResponse.ok);
         }
       } catch (err) {
@@ -307,7 +309,7 @@ const RecipeDetailPage = () => {
           </Grid>
           
           {/* Instructions Section */}
-          <Grid item xs={12} md={8}>
+          {/* <Grid item xs={12} md={8}>
             <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
               <Typography variant="h6" gutterBottom>
                 Instructions
@@ -329,7 +331,7 @@ const RecipeDetailPage = () => {
                 </Button>
               )}
             </Paper>
-          </Grid>
+          </Grid>*/}
         </Grid>
         
         {/* Reviews Section */}
