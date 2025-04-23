@@ -179,7 +179,7 @@ const CategoryDetailPage = () => {
           <Grid container spacing={3}>
             {displayed.map(recipe => (
               <Grid item xs={12} sm={6} md={4} key={recipe.id}>
-                <Card sx={{ height:"100%", display:"flex", flexDirection:"column", transition:"0.3s",
+                <Card sx={{ width: 300, height:"100%", display:"flex", flexDirection:"column", transition:"0.3s",
                             "&:hover":{ transform:"translateY(-5px)", boxShadow:6 } }}>
                   <CardActionArea onClick={() => navigate(`/recipe/${recipe.id}`)}>
                     {recipe.image && (

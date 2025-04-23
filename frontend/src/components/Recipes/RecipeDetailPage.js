@@ -227,16 +227,6 @@ const RecipeDetailPage = () => {
           >
             Recipes
           </Link>
-          {/* {recipe.cat.length > 0 && (
-          <Link
-            underline="hover"
-            color="inherit"
-            onClick={() => navigate('/category/${recipe.category.categoryId}')}
-            sx={{ cursor: "pointer"}}
-          >
-            {recipe.cat[0].catname}
-          </Link>
-          )} */}
           <Typography color="text.primary">{recipe.name}</Typography>
         </Breadcrumbs>
         

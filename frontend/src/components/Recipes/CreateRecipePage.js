@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -42,11 +42,35 @@ const CreateRecipePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
+  const[types, setTypes] = useState([]);
+  const[units, setUnits] = useState([]);
+  const[loadingMeta, setLoadingMeta] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [catRes, unitRes] = await Promise.all([
+          fetch("/api/categories/"),
+          fetch("/api/units/"),
+        ]);
+        if (!catRes.ok || !unitRes.ok) throw new Error("Failed to load categories");
+        const [cats, uns] = await Promise.all([catRes.json(), unitRes.json()]);
+
+        setTypes(cats.map(c => c.catname));
+        setUnits(uns.map(u => u.unit_name));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingMeta(false);
+      }
+    })();
+  }, []);
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     difficulty: 3,
-    catname: "",
+    categoryType: "",
     instructions: "",
     ingredients: []
   });
@@ -120,7 +144,8 @@ const CreateRecipePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.description || !formData.catname || !formData.instructions || formData.ingredients.length === 0) {
+    if (!formData.name || !formData.description || !formData.categoryType || 
+        !formData.instructions || formData.ingredients.length === 0) {
       setError("Please fill in all required fields and add at least one ingredient");
       return;
     }
@@ -133,9 +158,9 @@ const CreateRecipePage = () => {
         name: formData.name,
         description: formData.description,
         difficulty: formData.difficulty,
-        id: currentUser.userId,
+        userId: currentUser.userId,
         dateAdded: new Date().toISOString(),
-        category: formData.catname,
+        category: formData.categoryType,
         instructions: formData.instructions,
         ingredients: formData.ingredients.map(ing => ({
           ingredient: {
@@ -270,12 +295,12 @@ const CreateRecipePage = () => {
                 <FormControl fullWidth required>
                   <InputLabel>Category Type</InputLabel>
                   <Select
-                    name="catname"
+                    name="categoryType"
                     value={formData.catname}
                     onChange={handleChange}
-                    disabled={loading}
+                    disabled={loadingMeta}
                   >
-                    {TYPES.map((type) => (
+                    {types.map((type) => (
                       <MenuItem key={type} value={type}>
                         {type}
                       </MenuItem>
@@ -355,9 +380,9 @@ const CreateRecipePage = () => {
                         name="unit"
                         value={newIngredient.unit}
                         onChange={handleIngredientChange}
-                        disabled={loading}
+                        disabled={loadingMeta}
                       >
-                        {UNITS.map((unit) => (
+                        {units.map((unit) => (
                           <MenuItem key={unit} value={unit}>
                             {unit}
                           </MenuItem>
