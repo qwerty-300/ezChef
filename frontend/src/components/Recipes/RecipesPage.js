@@ -108,20 +108,29 @@ const RecipesPage = () => {
     
     // Search filter
     if (searchQuery) {
-      filtered = filtered.filter(recipe => 
-        recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        recipe.description.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      const lowercase = searchQuery.toLowerCase();
+      filtered = filtered.filter(recipe => {
+        // recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        // recipe.description.toLowerCase().includes(searchQuery.toLowerCase())
+        const nameMatch = recipe.name?.toLowerCase().includes(lowercase);
+        const desc = recipe.description ?? "";
+        const descMatch = desc.toLowerCase().includes(lowercase);
+        return nameMatch || descMatch;
+    });
     }
     
     // Category filter
     if (categoryFilter) {
-      filtered = filtered.filter(recipe => recipe.category.type === categoryFilter);
+      filtered = filtered.filter(
+        recipe => recipe.category?.type === categoryFilter // Added ?
+      );
     }
     
     // Region filter
     if (regionFilter) {
-      filtered = filtered.filter(recipe => recipe.category.region === regionFilter);
+      filtered = filtered.filter(
+        recipe => recipe.category?.region === regionFilter // Added ?
+      );
     }
     
     // Difficulty filter
@@ -457,9 +466,9 @@ const RecipesPage = () => {
                       </Box>
                       
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        {recipe.description.length > 120
+                        {recipe.description?.length > 120
                           ? `${recipe.description.substring(0, 120)}...`
-                          : recipe.description}
+                          : (recipe.description ?? "No description available")}
                       </Typography>
                       
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
