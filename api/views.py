@@ -8,7 +8,7 @@ from .models import User, Recipe, Review, Category, RecipeIngredients, Ingredien
 
 #--------------AUTHENTICATION VIEWS---------------#
 class RegisterView(APIView):
-    def post(self, request, category_id):
+    def post(self, request):
         username = request.data.get('username')
         email = request.data.get('email')
         password = request.data.get('password')
