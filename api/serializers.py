@@ -4,6 +4,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.hashers import make_password
 from .models import User, Recipe, Review, Category, RecipeIngredients, Ingredient, Unit, Quantity, Nutrition, Cookbook, AddRecipe, SubscribedCookbook
 
+
 #---------------USER SERIALIZER---------------#
 class UserSerializer(serializers.ModelSerializer):
     # Password should be write-only
@@ -71,19 +72,52 @@ class RecipeIngredientsSerializer(serializers.ModelSerializer):
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = ('ingredient_id', 'ingredient_name')
+        fields = ['ingredient_id', 'ingredient_name']
 
 #---------------UNIT SERIALIZER---------------#
 class UnitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Unit
-        fields = ('unit_id', 'unit_name', 'symbol')
+        fields = ['unit_id', 'unit_name', 'symbol']
+
+class NutritionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Nutrition
+        fields = ['nutrition_id', 'protein_count', 'calorie_count', 'serving_size']
+
+class RecipeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = ['recipe_id', 'recipe_name', 'recipe_description', 'date_added', 'recipe_difficulty']
+
+class RecipeDetailSerializer(serializers.ModelSerializer):
+    # Add related data for detailed view
+    class Meta:
+        model = Recipe
+        fields = ['recipe_id', 'recipe_name', 'recipe_description', 'date_added', 'recipe_difficulty']
+
+class RecipeIngredientSerializer(serializers.ModelSerializer):
+    ingredient_name = serializers.ReadOnlyField(source='ingredient.ingredient_name')
+    quantity_amount = serializers.ReadOnlyField(source='quantity.quantity_amount')
+    unit_name = serializers.ReadOnlyField(source='unit.unit_name', default='')
+    
+    class Meta:
+        model = RecipeIngredient
+        fields = ['recipe', 'ingredient', 'ingredient_name', 'quantity', 'quantity_amount', 'unit', 'unit_name']
+
+class ReviewSerializer(serializers.ModelSerializer):
+    username = serializers.ReadOnlyField(source='user.username')
+    recipe_name = serializers.ReadOnlyField(source='recipe.recipe_name')
+    
+    class Meta:
+        model = Review
+        fields = ['review_id', 'user', 'username', 'recipe', 'recipe_name', 'rating', 'comment', 'date_created']
 
 #---------------QUANTITY SERIALIZER---------------#
 class QuantitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Quantity
-        fields = ('quantity_id', 'quantity_amount')
+        fields = ['quantity_id', 'quantity_amount']
 
 #---------------NUTRITION SERIALIZER---------------#
 class NutritionSerializer(serializers.ModelSerializer):
@@ -139,4 +173,3 @@ class ReviewSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("User has already reviewed this cookbook.")
 
         return data
-
