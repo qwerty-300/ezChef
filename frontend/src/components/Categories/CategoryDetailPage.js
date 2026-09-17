@@ -118,25 +118,54 @@ const CategoryDetailPage = () => {
       </AppBar>
 
       {/* Hero */}
-      <Box sx={{ width:"100%", height:{ xs:150, sm:200, md:250 }, position:"relative", overflow:"hidden" }}>
+      <Box
+        sx={{
+          width: "100%",
+          minHeight: { xs: 140, sm: 180, md: 220 },
+          position: "relative",
+          overflow: "hidden",
+          bgcolor: "#1b5e20",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         {category.image && (
           <Box
             component="img"
             src={category.image}
-            alt={category.name}
-            sx={{ width:"100%", height:"100%", objectFit:"cover", filter:"brightness(0.7)" }}
+            alt=""
+            sx={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              filter: "brightness(0.45)",
+            }}
           />
         )}
-        <Box sx={{
-            position:"absolute", top:0, left:0, width:"100%", height:"100%",
-            display:"flex", flexDirection:"column", justifyContent:"center",
-            alignItems:"center", color:"white", textAlign:"center", p:2
-          }}>
-          <Typography variant="h3" sx={{ fontWeight:"bold", mb:1 }}>
+        <Box
+          sx={{
+            position: "relative",
+            zIndex: 1,
+            color: "white",
+            textAlign: "center",
+            p: 3,
+          }}
+        >
+          <Typography
+            variant="h3"
+            sx={{
+              fontWeight: "bold",
+              mb: 1,
+              textShadow: "0 1px 3px rgba(0,0,0,0.45)",
+            }}
+          >
             {category.name}
           </Typography>
           {category.description && (
-            <Typography variant="h6" sx={{ maxWidth:800 }}>
+            <Typography variant="h6" sx={{ maxWidth: 800, mx: "auto" }}>
               {category.description}
             </Typography>
           )}
