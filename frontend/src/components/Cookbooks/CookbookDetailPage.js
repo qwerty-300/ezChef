@@ -53,6 +53,13 @@ const CookbookDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const currentUserId = currentUser?.id ?? currentUser?.userId;
+  const isOwner = Boolean(
+    currentUserId &&
+    cookbook &&
+    Number(currentUserId) === Number(cookbook.userId ?? cookbook.creator?.id ?? cookbook.creator?.userId)
+  );
   
   // Menu state
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
@@ -303,9 +310,9 @@ const CookbookDetailPage = () => {
     }
   };
   
-  const filteredAvailableRecipes = availableRecipes.filter(recipe => 
-    recipe.name.toLowerCase().includes(addRecipeSearchQuery.toLowerCase()) ||
-    recipe.description.toLowerCase().includes(addRecipeSearchQuery.toLowerCase())
+  const filteredAvailableRecipes = availableRecipes.filter(recipe =>
+    recipe.name?.toLowerCase().includes(addRecipeSearchQuery.toLowerCase()) ||
+    (recipe.description || '').toLowerCase().includes(addRecipeSearchQuery.toLowerCase())
   );
   
   if (loading) {
@@ -351,7 +358,7 @@ const CookbookDetailPage = () => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "green" }}>
             ezChef
           </Typography>
-          {currentUser && currentUser.userId === cookbook.userId && (
+          {isOwner && (
             <>
               <Button
                 variant="contained"
@@ -422,7 +429,8 @@ const CookbookDetailPage = () => {
         </Breadcrumbs>
         
         {/* Cookbook Header */}
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, flexWrap: 'wrap' }}>
+          <Box>
           <Typography variant="h4" component="h1" gutterBottom>
             {cookbook.title}
           </Typography>
@@ -432,9 +440,20 @@ const CookbookDetailPage = () => {
             </Typography>
           )}
           <Typography variant="body2" color="text.secondary">
-            Created by {cookbook.user ? cookbook.user.username : "Unknown"} • 
+            Created by {cookbook.user?.username || cookbook.creator?.username || "Unknown"} • 
             {recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'}
           </Typography>
+          </Box>
+          {isOwner && (
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleOpenAddDialog}
+            >
+              Add Recipes
+            </Button>
+          )}
         </Box>
         
         {/* Search Box */}
@@ -459,7 +478,7 @@ const CookbookDetailPage = () => {
             <Typography variant="h6" gutterBottom>
               No recipes in this cookbook yet
             </Typography>
-            {currentUser && currentUser.userId === cookbook.userId && (
+            {isOwner && (
               <>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                   Add your favorite recipes to this cookbook
@@ -568,7 +587,7 @@ const CookbookDetailPage = () => {
                     </CardContent>
                   </CardActionArea>
                   
-                  {currentUser && currentUser.userId === cookbook.userId && (
+                  {isOwner && (
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1 }}>
                       <IconButton 
                         size="small" 
@@ -689,16 +708,19 @@ const CookbookDetailPage = () => {
                           {recipe.name}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {recipe.description.length > 60
+                          {(recipe.description || '').length > 60
                             ? `${recipe.description.substring(0, 60)}...`
-                            : recipe.description}
+                            : (recipe.description || '')}
                         </Typography>
                         <Box sx={{ display: 'flex', mt: 1, gap: 1 }}>
-                          <Chip
-                            label={recipe.category.type}
-                            size="small"
-                            variant="outlined"
-                          />
+                          {(recipe.category || recipe.cat || []).slice(0, 1).map((c) => (
+                            <Chip
+                              key={c.categoryId || c.catname}
+                              label={c.catname || c.r_type}
+                              size="small"
+                              variant="outlined"
+                            />
+                          ))}
                           <Chip
                             label={`Difficulty: ${recipe.difficulty}/5`}
                             size="small"

@@ -10,7 +10,8 @@ from .models import (
   Nutrition, 
   IdentifiedBy, 
   AddRecipe, 
-  Cookbook
+  Cookbook,
+  Review,
 )
 
 # Register your models here.
@@ -80,4 +81,9 @@ class AddRecipeInline(admin.TabularInline):
 class CookbookAdmin(admin.ModelAdmin):
     list_display = ('cb_id', 'cb_title', 'creator')
     inlines = [AddRecipeInline]
+
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ('review_id', 'user', 'recipe', 'rating', 'date_created')
     

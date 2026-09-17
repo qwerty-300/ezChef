@@ -22,6 +22,12 @@ import {
   IconButton,
   AppBar,
   Toolbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
+  ListItemButton,
   Breadcrumbs,
   Link
 } from "@mui/material";
@@ -49,6 +55,10 @@ const RecipeDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
+  const [cookbookDialogOpen, setCookbookDialogOpen] = useState(false);
+  const [userCookbooks, setUserCookbooks] = useState([]);
+  const [cookbookActionError, setCookbookActionError] = useState("");
+  const [savingToCookbook, setSavingToCookbook] = useState(false);
   // const [showFullInstructions, setShowFullInstructions] = useState(false);
   
   useEffect(() => {
@@ -89,27 +99,74 @@ const RecipeDetailPage = () => {
   
   const handleSaveRecipe = async () => {
     if (!currentUser) {
-      navigate('/login');
+      navigate('/');
       return;
     }
-    
+
+    setCookbookActionError("");
     try {
-      const method = isSaved ? 'DELETE' : 'POST';
-      const endpoint = `/api/users/${currentUser.id}/cookbooks/recipes/${recipeId}/`;
-        
-      const response = await fetch(endpoint, {
-        method,
+      const response = await fetch(`/api/users/${currentUser.id}/cookbooks/`, {
         credentials: 'include',
         headers: getHeaders()
       });
-      
       if (!response.ok) {
-        throw new Error('Failed to update cookbook');
+        throw new Error('Could not load your cookbooks');
       }
-      
-      setIsSaved(!isSaved);
+      const data = await response.json();
+      setUserCookbooks(data);
+      setCookbookDialogOpen(true);
     } catch (err) {
-      console.error('Error updating cookbook:', err);
+      console.error('Error loading cookbooks:', err);
+      setCookbookActionError(err.message || 'Could not load cookbooks');
+    }
+  };
+
+  const addRecipeToCookbook = async (cookbookId) => {
+    setSavingToCookbook(true);
+    setCookbookActionError("");
+    try {
+      const response = await fetch(`/api/cookbooks/${cookbookId}/recipes/${recipeId}/`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: getHeaders()
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || data.detail || 'Failed to add recipe to cookbook');
+      }
+      setIsSaved(true);
+      setCookbookDialogOpen(false);
+    } catch (err) {
+      console.error('Error adding recipe to cookbook:', err);
+      setCookbookActionError(err.message || 'Failed to add recipe to cookbook');
+    } finally {
+      setSavingToCookbook(false);
+    }
+  };
+
+  const createCookbookAndAdd = async () => {
+    setSavingToCookbook(true);
+    setCookbookActionError("");
+    try {
+      const createResponse = await fetch('/api/cookbooks/', {
+        method: 'POST',
+        credentials: 'include',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          title: 'My Cookbook',
+          description: 'Saved recipes',
+        }),
+      });
+      if (!createResponse.ok) {
+        const data = await createResponse.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to create cookbook');
+      }
+      const cookbook = await createResponse.json();
+      await addRecipeToCookbook(cookbook.cookbookId);
+    } catch (err) {
+      console.error('Error creating cookbook:', err);
+      setCookbookActionError(err.message || 'Failed to create cookbook');
+      setSavingToCookbook(false);
     }
   };
   
@@ -180,13 +237,15 @@ const RecipeDetailPage = () => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "green" }}>
             ezChef
           </Typography>
-          <IconButton 
+          <Button
             color="primary"
+            variant="outlined"
+            startIcon={isSaved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
             onClick={handleSaveRecipe}
-            title={isSaved ? "Remove from cookbook" : "Save to cookbook"}
+            sx={{ mr: 1 }}
           >
-            {isSaved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
-          </IconButton>
+            Add to cookbook
+          </Button>
           {currentUser && recipe.user && currentUser.id === recipe.user.userId && (
             <>
               <IconButton 
@@ -372,6 +431,49 @@ const RecipeDetailPage = () => {
           )}
         </Paper>
       </Container>
+
+      <Dialog open={cookbookDialogOpen} onClose={() => setCookbookDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Add to a cookbook</DialogTitle>
+        <DialogContent>
+          {cookbookActionError && (
+            <Alert severity="error" sx={{ mb: 2 }}>{cookbookActionError}</Alert>
+          )}
+          {userCookbooks.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              You do not have a cookbook yet. Create one to save this recipe.
+            </Typography>
+          ) : (
+            <List>
+              {userCookbooks.map((cb) => (
+                <ListItemButton
+                  key={cb.cookbookId}
+                  disabled={savingToCookbook}
+                  onClick={() => addRecipeToCookbook(cb.cookbookId)}
+                >
+                  <ListItemText
+                    primary={cb.title}
+                    secondary={cb.description || `${(cb.recipes || []).length} recipes`}
+                  />
+                </ListItemButton>
+              ))}
+            </List>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCookbookDialogOpen(false)} disabled={savingToCookbook}>
+            Cancel
+          </Button>
+          {userCookbooks.length === 0 && (
+            <Button
+              variant="contained"
+              onClick={createCookbookAndAdd}
+              disabled={savingToCookbook}
+            >
+              {savingToCookbook ? <CircularProgress size={24} /> : 'Create cookbook and add'}
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

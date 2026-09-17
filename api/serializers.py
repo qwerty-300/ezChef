@@ -45,7 +45,7 @@ class RecipeListSerializer(serializers.ModelSerializer):
     recipeId = serializers.IntegerField(source='recipe_id', read_only=True)
     name = serializers.CharField(source='recipe_name')
     description = serializers.CharField(source='recipe_description')
-    dateAdded = serializers.DateField(source='date_added', read_only=True)
+    dateAdded = serializers.DateTimeField(source='date_added', read_only=True)
     difficulty = serializers.IntegerField(source='recipe_difficulty')
     category = serializers.SerializerMethodField()
     cat = serializers.SerializerMethodField()
@@ -59,10 +59,7 @@ class RecipeListSerializer(serializers.ModelSerializer):
         )
 
     def get_category(self, obj):
-        categories = list(obj.category.all())
-        if obj.primary_category_id and obj.primary_category not in categories:
-            categories.insert(0, obj.primary_category)
-        return CategorySerializer(categories, many=True).data
+        return CategorySerializer(obj.category.all(), many=True).data
 
     def get_cat(self, obj):
         return self.get_category(obj)
@@ -170,11 +167,16 @@ class CookbookSerializer(serializers.ModelSerializer):
     title = serializers.CharField(source='cb_title')
     description = serializers.CharField(source='cb_description', allow_blank=True, required=False)
     creator = UserSerializer(read_only=True)
+    user = UserSerializer(source='creator', read_only=True)
+    userId = serializers.IntegerField(source='creator_id', read_only=True)
     recipes = serializers.SerializerMethodField()
 
     class Meta:
         model = Cookbook
-        fields = ('cookbookId', 'cb_id', 'title', 'description', 'creator', 'recipes')
+        fields = (
+            'cookbookId', 'cb_id', 'title', 'description',
+            'creator', 'user', 'userId', 'recipes',
+        )
 
     def get_recipes(self, obj):
         recipes = Recipe.objects.filter(in_cookbooks__cb=obj).distinct()

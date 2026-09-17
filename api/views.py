@@ -47,11 +47,16 @@ def get_or_create_quantity(amount):
     return Quantity.objects.create(quantity_id=next_id, quantity_amount=amount_int)
 
 
+def next_cookbook_id():
+    return (Cookbook.objects.aggregate(Max('cb_id'))['cb_id__max'] or 0) + 1
+
+
 def get_or_create_default_cookbook(user):
     cookbook = Cookbook.objects.filter(creator=user).order_by('cb_id').first()
     if cookbook:
         return cookbook
     return Cookbook.objects.create(
+        cb_id=next_cookbook_id(),
         cb_title='My Cookbook',
         cb_description='Saved recipes',
         creator=user,
@@ -207,9 +212,7 @@ class RecipeListView(APIView):
         recipes = Recipe.objects.all().distinct()
 
         if category_id:
-            recipes = recipes.filter(
-                Q(primary_category_id=category_id) | Q(category__category_id=category_id)
-            )
+            recipes = recipes.filter(category__category_id=category_id)
 
         if search:
             recipes = recipes.filter(
@@ -272,19 +275,16 @@ class CreateRecipeView(APIView):
                 recipe_name=recipe_name,
                 recipe_description=recipe_description,
                 recipe_difficulty=int(recipe_difficulty),
-                date_added=timezone.now().date(),
+                date_added=timezone.now(),
             )
+            recipe.save()
 
             if category_name:
                 category, _ = Category.objects.get_or_create(
                     r_type=category_name,
                     r_region=category_region,
                 )
-                recipe.primary_category = category
-                recipe.save()
                 IdentifiedBy.objects.get_or_create(recipe=recipe, category=category)
-            else:
-                recipe.save()
 
             for ing_data in ingredients:
                 if isinstance(ing_data.get('ingredient'), dict):
@@ -389,6 +389,7 @@ class CookbookListCreateView(APIView):
         if not title:
             return Response({'message': 'Title is required'}, status=status.HTTP_400_BAD_REQUEST)
         cookbook = Cookbook.objects.create(
+            cb_id=next_cookbook_id(),
             cb_title=title[:30],
             cb_description=description,
             creator=request.user,

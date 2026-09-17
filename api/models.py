@@ -3,7 +3,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class AddRecipe(models.Model):
-    id = models.AutoField(primary_key=True)
+    pk = models.CompositePrimaryKey('user', 'cb', 'recipe')
     user = models.ForeignKey('User', db_column='user_id', on_delete=models.DO_NOTHING, related_name='saved_recipes')
     recipe = models.ForeignKey('Recipe', db_column='recipe_id', on_delete=models.DO_NOTHING, related_name='in_cookbooks')
     cb = models.ForeignKey('Cookbook', db_column='cb_id', on_delete=models.CASCADE, related_name='entries')
@@ -50,7 +50,7 @@ class Client(models.Model):
 
 
 class Cookbook(models.Model):
-    cb_id = models.AutoField(primary_key=True)
+    cb_id = models.IntegerField(primary_key=True)
     cb_title = models.CharField(max_length=30)
     cb_description = models.TextField(blank=True, null=True)
     creator = models.ForeignKey(
@@ -84,7 +84,7 @@ class SubscribedCookbook(models.Model):
 
 
 class IdentifiedBy(models.Model):
-    id = models.AutoField(primary_key=True)
+    pk = models.CompositePrimaryKey('recipe', 'category')
     recipe = models.ForeignKey('Recipe', db_column='ib_r_id', on_delete=models.CASCADE)
     category = models.ForeignKey('Category', db_column='ib_c_id', on_delete=models.CASCADE)
 
@@ -135,17 +135,9 @@ class Recipe(models.Model):
     recipe_id = models.AutoField(primary_key=True)
     recipe_name = models.CharField(max_length=50)
     recipe_description = models.TextField()
-    date_added = models.DateField(blank=True, null=True)
+    date_added = models.DateTimeField(blank=True, null=True)
     recipe_difficulty = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)]
-    )
-    primary_category = models.ForeignKey(
-        'Category',
-        db_column='category_id',
-        on_delete=models.DO_NOTHING,
-        blank=True,
-        null=True,
-        related_name='direct_recipes',
     )
     category = models.ManyToManyField(
         'Category',
@@ -162,7 +154,7 @@ class Recipe(models.Model):
 
 
 class RecipeIngredients(models.Model):
-    id = models.AutoField(primary_key=True)
+    pk = models.CompositePrimaryKey('recipe', 'ingredient', 'quantity')
     ingredient = models.ForeignKey(Ingredient, models.DO_NOTHING)
     quantity = models.ForeignKey(Quantity, models.DO_NOTHING)
     unit = models.ForeignKey('Unit', models.DO_NOTHING, blank=True, null=True)
