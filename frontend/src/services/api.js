@@ -6,20 +6,27 @@
  */
 const getAuthToken = () => localStorage.getItem('authToken');
 
-/**
- * Common headers for API requests
- * @returns {Object} Headers object with authentication token if available
- */
-const getHeaders = () => {
-  const headers = {
-    'Content-Type': 'application/json'
-  };
-  
+function getCookie(name) {
+  const match = document.cookie.match(new RegExp('(^|; )' + name + '=([^;]*)'));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+
+export const getHeaders = (includeJson = true) => {
+  const headers = {};
+  if (includeJson) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   const token = getAuthToken();
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  
+
+  const csrftoken = getCookie('csrftoken');
+  if (csrftoken) {
+    headers['X-CSRFToken'] = csrftoken;
+  }
+
   return headers;
 };
 
@@ -62,6 +69,7 @@ const handleResponse = async (response) => {
 export const get = async (endpoint) => {
   const response = await fetch(`/api${endpoint}`, {
     method: 'GET',
+    credentials: 'include',
     headers: getHeaders()
   });
   
@@ -77,6 +85,7 @@ export const get = async (endpoint) => {
 export const post = async (endpoint, data) => {
   const response = await fetch(`/api${endpoint}`, {
     method: 'POST',
+    credentials: 'include',
     headers: getHeaders(),
     body: JSON.stringify(data)
   });
@@ -93,6 +102,7 @@ export const post = async (endpoint, data) => {
 export const put = async (endpoint, data) => {
   const response = await fetch(`/api${endpoint}`, {
     method: 'PUT',
+    credentials: 'include',
     headers: getHeaders(),
     body: JSON.stringify(data)
   });
@@ -109,6 +119,7 @@ export const put = async (endpoint, data) => {
 export const patch = async (endpoint, data) => {
   const response = await fetch(`/api${endpoint}`, {
     method: 'PATCH',
+    credentials: 'include',
     headers: getHeaders(),
     body: JSON.stringify(data)
   });
@@ -124,6 +135,7 @@ export const patch = async (endpoint, data) => {
 export const del = async (endpoint) => {
   const response = await fetch(`/api${endpoint}`, {
     method: 'DELETE',
+    credentials: 'include',
     headers: getHeaders()
   });
   
@@ -135,7 +147,8 @@ const api = {
   post,
   put,
   patch,
-  delete: del
+  delete: del,
+  getHeaders
 };
 
 export default api;

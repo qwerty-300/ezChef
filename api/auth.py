@@ -1,6 +1,16 @@
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.hashers import check_password
+from rest_framework.authentication import BaseAuthentication
 from .models import User
+
+
+class EzChefJWTAuthentication(BaseAuthentication):
+    def authenticate(self, request):
+        user = getattr(request._request, 'user', None)
+        if user and getattr(user, 'id', None) and getattr(user, 'is_authenticated', False):
+            return (user, None)
+        return None
+
 
 class EzChefAuthBackend(BaseBackend):
     def authenticate(self, request, username=None, password=None):

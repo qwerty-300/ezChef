@@ -65,7 +65,7 @@ export const getUserRecipes = async (userId) => {
  * @returns {Promise} Promise that resolves to the created recipe
  */
 export const createRecipe = async (recipeData) => {
-  return api.post('/recipes', recipeData);
+  return api.post('/recipes/create/', recipeData);
 };
 
 /**

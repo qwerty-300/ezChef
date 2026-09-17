@@ -71,7 +71,7 @@ const RecipesPage = () => {
       try {
         setLoading(true);
         
-        const response = await fetch('/api/recipes');
+        const response = await fetch('/api/recipes/');
         
         if (!response.ok) {
           throw new Error('Failed to fetch recipes');
@@ -109,7 +109,7 @@ const RecipesPage = () => {
     // Category filter
     if (categoryFilter) {
       filtered = filtered.filter(recipe => 
-          (recipe.category || []).some(c => c.cat_name === categoryFilter)
+          (recipe.category || []).some(c => c.catname === categoryFilter)
       );
     }
     

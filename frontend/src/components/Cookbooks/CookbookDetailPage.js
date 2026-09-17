@@ -42,6 +42,7 @@ import {
   FilterList as FilterListIcon
 } from "@mui/icons-material";
 import { useAuth } from "../Auth/AuthContext";
+import { getHeaders } from "../../services/api";
 
 const CookbookDetailPage = () => {
   const { cookbookId } = useParams();
@@ -76,7 +77,10 @@ const CookbookDetailPage = () => {
         setLoading(true);
         
         // Replace with actual API call when backend is implemented
-        const response = await fetch(`/api/cookbooks/${cookbookId}`);
+        const response = await fetch(`/api/cookbooks/${cookbookId}/`, {
+          credentials: 'include',
+          headers: getHeaders()
+        });
         
         if (!response.ok) {
           throw new Error('Cookbook not found');
@@ -106,7 +110,7 @@ const CookbookDetailPage = () => {
   
   const filteredRecipes = recipes.filter(recipe => 
     recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    recipe.description.toLowerCase().includes(searchQuery.toLowerCase())
+    (recipe.description || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
   
   const handleMenuOpen = (event) => {
@@ -139,11 +143,10 @@ const CookbookDetailPage = () => {
         description: editDescription.trim()
       };
       
-      const response = await fetch(`/api/cookbooks/${cookbookId}`, {
+      const response = await fetch(`/api/cookbooks/${cookbookId}/`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        credentials: 'include',
+        headers: getHeaders(),
         body: JSON.stringify(cookbookData),
       });
       
@@ -173,8 +176,10 @@ const CookbookDetailPage = () => {
     
     if (window.confirm('Are you sure you want to delete this cookbook? This action cannot be undone.')) {
       try {
-        const response = await fetch(`/api/cookbooks/${cookbookId}`, {
+        const response = await fetch(`/api/cookbooks/${cookbookId}/`, {
           method: 'DELETE',
+          credentials: 'include',
+          headers: getHeaders()
         });
         
         if (!response.ok) {
@@ -197,8 +202,10 @@ const CookbookDetailPage = () => {
     
     if (window.confirm('Remove this recipe from the cookbook?')) {
       try {
-        const response = await fetch(`/api/cookbooks/${cookbookId}/recipes/${recipeId}`, {
+        const response = await fetch(`/api/cookbooks/${cookbookId}/recipes/${recipeId}/`, {
           method: 'DELETE',
+          credentials: 'include',
+          headers: getHeaders()
         });
         
         if (!response.ok) {
@@ -228,7 +235,10 @@ const CookbookDetailPage = () => {
     try {
       setLoadingAvailableRecipes(true);
       
-      const response = await fetch(`/api/recipes?notInCookbook=${cookbookId}`);
+      const response = await fetch(`/api/recipes/?notInCookbook=${cookbookId}`, {
+        credentials: 'include',
+        headers: getHeaders()
+      });
       
       if (!response.ok) {
         throw new Error('Failed to fetch available recipes');
@@ -262,8 +272,10 @@ const CookbookDetailPage = () => {
       setSaving(true);
       
       for (const recipeId of selectedRecipes) {
-        const response = await fetch(`/api/cookbooks/${cookbookId}/recipes/${recipeId}`, {
+        const response = await fetch(`/api/cookbooks/${cookbookId}/recipes/${recipeId}/`, {
           method: 'POST',
+          credentials: 'include',
+          headers: getHeaders()
         });
         
         if (!response.ok) {
@@ -272,7 +284,10 @@ const CookbookDetailPage = () => {
       }
       
       // Refresh the cookbook to get the updated recipes
-      const response = await fetch(`/api/cookbooks/${cookbookId}`);
+      const response = await fetch(`/api/cookbooks/${cookbookId}/`, {
+        credentials: 'include',
+        headers: getHeaders()
+      });
       
       if (response.ok) {
         const data = await response.json();

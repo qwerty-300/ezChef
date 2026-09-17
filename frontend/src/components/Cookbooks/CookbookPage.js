@@ -40,6 +40,7 @@ import {
   MenuBook as MenuBookIcon
 } from "@mui/icons-material";
 import { useAuth } from "../Auth/AuthContext";
+import { getHeaders } from "../../services/api";
 
 const CookbookPage = () => {
   const navigate = useNavigate();
@@ -62,7 +63,10 @@ const CookbookPage = () => {
       try {
         setLoading(true);
 
-        const response = await fetch(`/api/users/${currentUser.userId}/cookbooks`);
+        const response = await fetch(`/api/users/${currentUser.id}/cookbooks/`, {
+          credentials: 'include',
+          headers: getHeaders()
+        });
         
         if (!response.ok) {
           throw new Error('Failed to fetch cookbooks');
@@ -86,7 +90,7 @@ const CookbookPage = () => {
   };
   
   const filteredCookbooks = cookbooks.filter(cookbook => 
-    cookbook.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    cookbook.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (cookbook.description && cookbook.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
   
@@ -111,15 +115,14 @@ const CookbookPage = () => {
       const cookbookData = {
         title: newCookbookName.trim(),
         description: newCookbookDescription.trim(),
-        userId: currentUser.userId,
+        userId: currentUser.id,
         numOfSaves: 0
       };
       
-      const response = await fetch('/api/cookbooks', {
+      const response = await fetch('/api/cookbooks/', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        credentials: 'include',
+        headers: getHeaders(),
         body: JSON.stringify(cookbookData),
       });
       
@@ -148,8 +151,10 @@ const CookbookPage = () => {
     
     if (window.confirm('Are you sure you want to delete this cookbook? This action cannot be undone.')) {
       try {
-        const response = await fetch(`/api/cookbooks/${cookbookId}`, {
+        const response = await fetch(`/api/cookbooks/${cookbookId}/`, {
           method: 'DELETE',
+          credentials: 'include',
+          headers: getHeaders()
         });
         
         if (!response.ok) {

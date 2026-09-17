@@ -10,6 +10,7 @@ import {
   CircularProgress
 } from "@mui/material";
 import { useAuth } from "../Auth/AuthContext";
+import { getHeaders } from "../../services/api";
 
 const ReviewForm = ({ recipeId }) => {
   const { currentUser } = useAuth();
@@ -34,17 +35,16 @@ const ReviewForm = ({ recipeId }) => {
     try {
       const reviewData = {
         recipeId: recipeId,
-        userId: currentUser.userId,
+        userId: currentUser.id,
         rating: rating,
         comment: comment,
         date: new Date().toISOString()
       };
       
-      const response = await fetch('/api/reviews', {
+      const response = await fetch('/api/reviews/', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        credentials: 'include',
+        headers: getHeaders(),
         body: JSON.stringify(reviewData),
       });
       

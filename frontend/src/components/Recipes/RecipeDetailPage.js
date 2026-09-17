@@ -39,6 +39,7 @@ import {
 } from "@mui/icons-material";
 import { useAuth } from "../Auth/AuthContext";
 import ReviewForm from "./ReviewForm";
+import { getHeaders } from "../../services/api";
 
 const RecipeDetailPage = () => {
   const { recipeId } = useParams();
@@ -56,7 +57,8 @@ const RecipeDetailPage = () => {
         setLoading(true);
         
         const response = await fetch(`/api/recipes/${recipeId}/`, {
-          headers: { 'Content-Type': 'application/json'}
+          credentials: 'include',
+          headers: getHeaders()
         });
         
         if (!response.ok) {
@@ -68,7 +70,10 @@ const RecipeDetailPage = () => {
         
         // Check if recipe is saved in user's cookbook
         if (currentUser) {
-          const savedResponse = await fetch(`/api/users/${currentUser.userId}/cookbooks/recipes/${recipeId}/`);
+          const savedResponse = await fetch(`/api/users/${currentUser.id}/cookbooks/recipes/${recipeId}/`, {
+            credentials: 'include',
+            headers: getHeaders()
+          });
           setIsSaved(savedResponse.ok);
         }
       } catch (err) {
@@ -90,15 +95,12 @@ const RecipeDetailPage = () => {
     
     try {
       const method = isSaved ? 'DELETE' : 'POST';
-      const endpoint = isSaved 
-        ? `/api/users/${currentUser.userId}/cookbooks/recipes/${recipeId}`
-        : `/api/users/${currentUser.userId}/cookbooks/recipes/${recipeId}`;
+      const endpoint = `/api/users/${currentUser.id}/cookbooks/recipes/${recipeId}/`;
         
       const response = await fetch(endpoint, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-        }
+        credentials: 'include',
+        headers: getHeaders()
       });
       
       if (!response.ok) {
@@ -118,8 +120,10 @@ const RecipeDetailPage = () => {
   const handleDeleteRecipe = async () => {
     if (window.confirm('Are you sure you want to delete this recipe? This action cannot be undone.')) {
       try {
-        const response = await fetch(`/api/recipes/${recipeId}`, {
+        const response = await fetch(`/api/recipes/${recipeId}/`, {
           method: 'DELETE',
+          credentials: 'include',
+          headers: getHeaders()
         });
         
         if (!response.ok) {
@@ -183,7 +187,7 @@ const RecipeDetailPage = () => {
           >
             {isSaved ? <BookmarkIcon /> : <BookmarkBorderIcon />}
           </IconButton>
-          {currentUser && currentUser.userId === recipe.user.userId && (
+          {currentUser && recipe.user && currentUser.id === recipe.user.userId && (
             <>
               <IconButton 
                 color="primary" 
@@ -237,7 +241,7 @@ const RecipeDetailPage = () => {
                 {recipe.name}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
-                {recipe.cat.map(c => (
+                {(recipe.cat || recipe.category || []).map(c => (
                   <Chip
                     key={c.categoryId}
                     label={c.catname}
@@ -271,7 +275,7 @@ const RecipeDetailPage = () => {
                 Ingredients
               </Typography>
               <List>
-                {recipe.recipeIngredients.map((item, index) => (
+                {(recipe.recipeIngredients || []).map((item, index) => (
                   <ListItem key={index} disablePadding sx={{ py: 1 }}>
                     <ListItemIcon sx={{ minWidth: 28 }}>
                       <BulletIcon fontSize="small" />
@@ -345,7 +349,7 @@ const RecipeDetailPage = () => {
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <Avatar sx={{ width: 32, height: 32, mr: 1, bgcolor: 'primary.main' }}>
-                      {review.user.firstName.charAt(0) + review.user.lastName.charAt(0)}
+                      {review.user.firstName?.charAt(0) || ''}{review.user.lastName?.charAt(0) || ''}
                     </Avatar>
                     <Typography variant="subtitle1">
                       {review.user.username}

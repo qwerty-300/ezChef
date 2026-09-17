@@ -22,8 +22,8 @@ class UserAdmin(admin.ModelAdmin):
 #---------------Category Admin---------------#
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('category_id', 'cat_name')
-    search_fields = ('cat_name',)
+    list_display = ('category_id', 'r_type', 'r_region')
+    search_fields = ('r_type', 'r_region')
 
 #---------------Recipe & Inlines---------------# 
 class RecipeIngredientsInline(admin.TabularInline):
@@ -78,6 +78,6 @@ class AddRecipeInline(admin.TabularInline):
 
 @admin.register(Cookbook)
 class CookbookAdmin(admin.ModelAdmin):
-    list_display = ('cb_id', 'cb_title')
+    list_display = ('cb_id', 'cb_title', 'creator')
     inlines = [AddRecipeInline]
     

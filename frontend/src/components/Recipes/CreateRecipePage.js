@@ -34,6 +34,7 @@ import {
   Delete as DeleteIcon
 } from "@mui/icons-material";
 import { useAuth } from "../Auth/AuthContext";
+import { getHeaders } from "../../services/api";
 
 const CreateRecipePage = () => {
   const navigate = useNavigate();
@@ -181,10 +182,8 @@ const CreateRecipePage = () => {
       
       const response = await fetch('/api/recipes/create/', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Make sure to include auth token
-        },
+        credentials: 'include',
+        headers: getHeaders(),
         body: JSON.stringify(recipeData),
       });
       
@@ -296,7 +295,7 @@ const CreateRecipePage = () => {
                   <InputLabel>Category Type</InputLabel>
                   <Select
                     name="categoryType"
-                    value={formData.catname}
+                    value={formData.categoryType}
                     onChange={handleChange}
                     disabled={loadingMeta}
                   >

@@ -46,8 +46,8 @@ const HomePage = () => {
       try {
         setLoading(true);
 
-        const recentResponse = await fetch('/api/recipes?sort=newest&limit=3');
-        const popularResponse = await fetch('/api/recipes?sort=popular&limit=3');
+        const recentResponse = await fetch('/api/recipes/?sort=newest&limit=3');
+        const popularResponse = await fetch('/api/recipes/?sort=popular&limit=3');
         
         if (recentResponse.ok && popularResponse.ok) {
           const recentData = await recentResponse.json();
